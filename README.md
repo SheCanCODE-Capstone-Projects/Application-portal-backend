@@ -6,8 +6,6 @@ This system handles everything from **account registration → automated screeni
 
 This README explains the project’s structure, workflow, setup, branching model, best practices, and contribution rules.
 
----
-
 ## Features
 
 ### **Applicant Portal**
@@ -46,8 +44,6 @@ This README explains the project’s structure, workflow, setup, branching model
 * Data extracted for reporting/ML
 * Audit logs + processing stats
 
----
-
 # Architecture & Workflow
 
 Below is a textual breakdown of the system flow:
@@ -65,8 +61,6 @@ Below is a textual breakdown of the system flow:
 
 This triggers the automated review engine.
 
----
-
 ### **2. Automated System Review**
 
 1. Application enters rule-based auto-filter
@@ -74,18 +68,15 @@ This triggers the automated review engine.
 3. If **Passed** → External Data Checks
 4. System queues application for **Administrator Review**
 
----
-
 ### **3. Admin Processing**
 
 1. Admin opens Dashboard
 2. Review application
 3. If rejected → the applicant gets a rejection email
-4. If an interview needed → schedule interview email sent
+4. If an interview is needed → schedule interview email sent
 5. After interview → admin records results
 6. Application moves to **Final Approval**
 
----
 
 ### **4. Final Approval**
 
@@ -94,7 +85,6 @@ This triggers the automated review engine.
 3. If rejected → rejection email sent
 4. Data stored in SQL + sent to analytics module
 
----
 
 [//]: # (# Project Structure &#40;Java + Maven&#41;)
 
@@ -164,7 +154,7 @@ This triggers the automated review engine.
 | External APIs | (ID verification, background checks, etc.) |
 | Testing       | JUnit, Mockito                     |
 
----
+
 
 # Git Branching Strategy
 
@@ -206,7 +196,6 @@ Example: `fix/email-timeout`
 `hotfix/<critical-issue>`
   For urgent production fixes
 
----
 
 # Best Practices
 
@@ -250,7 +239,6 @@ Example: `fix/email-timeout`
 * Friendly API error responses
 * Avoid exposing sensitive system info
 
----
 
 # Running the Project (Development)
 
@@ -278,15 +266,11 @@ Example: `fix/email-timeout`
 * API: `http://localhost:8080/api`
 * Admin Dashboard: (if applicable)
 
----
-
 # Running Tests
 
 ```
 mvn test
 ```
-
----
 
 # Deployment
 
@@ -302,8 +286,6 @@ You can deploy using:
   docker run -p 8080:8080 applicant-system
 ```
 
----
-
 # Database Schema
 
 * **users**
@@ -315,8 +297,6 @@ You can deploy using:
 * **external_checks**
 
 (A full ERD is coming soon.)
-
----
 
 # API Endpoints Example
 
@@ -338,7 +318,6 @@ Fetch applications awaiting admin action.
 
 (API documentation coming soon.)
 
----
 
 # Contributing
 
@@ -351,7 +330,6 @@ Fetch applications awaiting admin action.
 3. Commit changes
 4. Push branch
 5. Open a Pull Request
-
 
 --- 
 ![System Diagram](./assets/system-diagram.png)
