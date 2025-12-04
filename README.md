@@ -86,8 +86,8 @@ This triggers the automated review engine.
 4. Data stored in SQL + sent to analytics module
 
 
-### 5.Project Folder-Structure 
-
+### **5.Project Folder-Structure** 
+````
 ApplicationPortalBackend/
 ├── src/main/
 │   ├── java/com/igirerwanda/application_portal_backend/
@@ -112,7 +112,7 @@ ApplicationPortalBackend/
 │   ├── repository/                   # Repository tests
 │   └── service/                      # Service tests
 │
-
+````
 
 # Tech Stack
 
