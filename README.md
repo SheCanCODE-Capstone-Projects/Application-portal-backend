@@ -86,7 +86,7 @@ This triggers the automated review engine.
 4. Data stored in SQL + sent to analytics module
 
 
-### Project Folder-Structure 
+### 5.Project Folder-Structure 
 
 ApplicationPortalBackend/
 ├── src/main/
