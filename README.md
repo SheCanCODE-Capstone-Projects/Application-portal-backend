@@ -86,61 +86,33 @@ This triggers the automated review engine.
 4. Data stored in SQL + sent to analytics module
 
 
-[//]: # (# Project Structure &#40;Java + Maven&#41;)
-
-[//]: # ()
-[//]: # (```)
-
-[//]: # (project-root/)
-
-[//]: # (│── src/)
-
-[//]: # (│   ├── main/)
-
-[//]: # (│   │   ├── java/)
-
-[//]: # (│   │   │   └── com.yourcompany.applicant/)
-
-[//]: # (│   │   │       ├── controllers/      # REST Controllers)
-
-[//]: # (│   │   │       ├── services/         # Business logic)
-
-[//]: # (│   │   │       ├── repositories/     # Database layer)
-
-[//]: # (│   │   │       ├── models/           # Entities / DTOs)
-
-[//]: # (│   │   │       ├── dto/              # Request/Response objects)
-
-[//]: # (│   │   │       ├── config/           # Security, Email, DB configs)
-
-[//]: # (│   │   └── resources/)
-
-[//]: # (│   │       ├── application.properties)
-
-[//]: # (│   │       └── templates/            # Email templates &#40;Freemarker/Thymeleaf&#41;)
-
-[//]: # (│   └── test/)
-
-[//]: # (│       └── java/                     # Unit & Integration Tests)
-
-[//]: # (│)
-
-[//]: # (│── pom.xml)
-
-[//]: # (│── README.md)
-
-[//]: # (│── .gitignore)
-
-[//]: # (│── docs/)
-
-[//]: # (│── diagrams/)
-
-[//]: # (│── scripts/)
-
-[//]: # (```)
-
-[//]: # ()
-[//]: # (---)
+### **5.Project Folder-Structure** 
+````
+ApplicationPortalBackend/
+├── src/main/
+│   ├── java/com/igirerwanda/application_portal_backend/
+│   │   ├── admin/                    # Admin-related controllers and services
+│   │   ├── application/              # Application management logic
+│   │   ├── auth/                     # Authentication and authorization
+│   │   ├── cohort/                   # Cohort management
+│   │   ├── common/                   # Shared utilities and DTOs
+│   │   ├── config/                   # Configuration classes
+│   │   ├── me/                       # Self-service endpoints
+│   │   ├── notification/             # Notification services
+│   │   ├── review/                   # Review and evaluation logic
+│   │   ├── scheduler/                # Scheduled tasks
+│   │   ├── security/                 # Security classes (JWT, filters, etc.)
+│   │   ├── user/                     # User management
+│   │   └── ApplicationPortalBackendApplication.java   # Main application class
+│   │
+│   └── resources/                    # Configuration files (application.properties)
+│
+├── src/test/java/com/igirerwanda/application_portal_backend/
+│   ├── controller/                   # Controller tests
+│   ├── repository/                   # Repository tests
+│   └── service/                      # Service tests
+│
+````
 
 # Tech Stack
 
