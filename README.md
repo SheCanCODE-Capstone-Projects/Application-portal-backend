@@ -87,38 +87,31 @@ This triggers the automated review engine.
 
 
 ### Project Folder-Structure 
+
 ApplicationPortalBackend/
-│
-├── src/main/java/com/igirerwanda/application_portal_backend/
-│   ├── admin/                    # Admin-related controllers and services
-│   ├── application/              # Application management logic
-│   ├── auth/                     # Authentication and authorization
-│   ├── cohort/                   # Cohort management
-│   ├── common/                   # Shared utilities and DTOs
-│   ├── config/                   # Configuration classes (Spring config, security, etc.)
-│   ├── me/                       # Self-service endpoints for authenticated user (profile sync, preferences)
-│   ├── notification/             # Notification services
-│   ├── review/                   # Review and evaluation logic
-│   ├── scheduler/                # Scheduled tasks
-│   ├── security/                 # Security-related classes (JWT, filters, etc.)
-│   ├── user/                     # User management
-│   └── ApplicationPortalBackendApplication.java   # Main application class
+├── src/main/
+│   ├── java/com/igirerwanda/application_portal_backend/
+│   │   ├── admin/                    # Admin-related controllers and services
+│   │   ├── application/              # Application management logic
+│   │   ├── auth/                     # Authentication and authorization
+│   │   ├── cohort/                   # Cohort management
+│   │   ├── common/                   # Shared utilities and DTOs
+│   │   ├── config/                   # Configuration classes
+│   │   ├── me/                       # Self-service endpoints
+│   │   ├── notification/             # Notification services
+│   │   ├── review/                   # Review and evaluation logic
+│   │   ├── scheduler/                # Scheduled tasks
+│   │   ├── security/                 # Security classes (JWT, filters, etc.)
+│   │   ├── user/                     # User management
+│   │   └── ApplicationPortalBackendApplication.java   # Main application class
+│   │
+│   └── resources/                    # Configuration files (application.properties)
 │
 ├── src/test/java/com/igirerwanda/application_portal_backend/
-│   ├── controller/               # Controller tests
-│   │   
-│   ├── repository/               # Repository tests
-│   │   
-│   └── service/                  # Service tests
-│      
+│   ├── controller/                   # Controller tests
+│   ├── repository/                   # Repository tests
+│   └── service/                      # Service tests
 │
-├── resources/               # Configuration files (application.yml, static, templates)
-├── assets/                  # Static assets (images, styles, etc.)
-├──  mvnw.cmd                # Maven wrapper scripts
-├── pom.xml                  # Maven dependencies and configuration
-├── README.md                # Project documentation
-├── .gitignore               # Git ignore rules
-├── .gitattributes           # Git attributes
 
 
 # Tech Stack
