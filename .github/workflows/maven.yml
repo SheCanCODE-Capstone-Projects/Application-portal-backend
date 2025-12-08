@@ -1,9 +1,10 @@
 name: Application Portal Backend CI/CD
+
 on:
   push:
-    branches: [ "develop", "main" ]
+    branches: ["develop", "main"]
   pull_request:
-    branches: [ "develop", "main" ]
+    branches: ["develop", "main"]
 
 jobs:
   # Build and Test Job
@@ -24,9 +25,6 @@ jobs:
       - name: Build project and run tests
         run: mvn clean verify
 
-      - name: Run Qodana (optional code quality)
-        run: mvn qodana:check
-
   # Docker Build & Run
   docker:
     runs-on: ubuntu-latest
@@ -39,8 +37,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Build Docker image
         run: docker build -t yourdockerhub/application-portal-backend:${{ github.sha }} .
+
+      - name: Push Docker image to DockerHub
+        run: docker push yourdockerhub/application-portal-backend:${{ github.sha }}
 
       - name: Stop previous container (if exists)
         run: |
@@ -50,33 +57,24 @@ jobs:
       - name: Run Docker container
         run: docker run -d --name application-portal-backend -p 8080:8080 yourdockerhub/application-portal-backend:${{ github.sha }}
 
-      - name: Login to DockerHub (optional)
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Push Docker image to DockerHub (optional)
-        run: docker push yourdockerhub/application-portal-backend:${{ github.sha }}
-
   # Production Deployment
   deploy:
     runs-on: ubuntu-latest
     needs: docker
-    if: github.ref == 'refs/heads/main'  # Only deploy from main branch
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Deploy to Production Server
         run: |
-          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} "
-          docker pull yourdockerhub/application-portal-backend:${{ github.sha }} &&
-          docker stop application-portal-backend || true &&
-          docker rm application-portal-backend || true &&
-          docker run -d --name application-portal-backend -p 8080:8080 yourdockerhub/application-portal-backend:${{ github.sha }}
+          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} "\
+          docker pull yourdockerhub/application-portal-backend:${{ github.sha }} && \
+          docker stop application-portal-backend || true && \
+          docker rm application-portal-backend || true && \
+          docker run -d --name application-portal-backend -p 8080:8080 yourdockerhub/application-portal-backend:${{ github.sha }} \
           "
+
       - name: Install Docker Compose (if needed)
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
           docker compose version
-
