@@ -73,8 +73,11 @@ jobs:
           docker run -d --name application-portal-backend -p 8080:8080 yourdockerhub/application-portal-backend:${{ github.sha }} \
           "
 
-      - name: Install Docker Compose (if needed)
+      - name: Run Docker Compose
         run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker compose version
+              cp .env.example .env
+              docker compose up -d
+              sleep 30
+              docker compose ps
+              docker compose logs
+              docker compose down -v
