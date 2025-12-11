@@ -1,4 +1,8 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
-public class AuthService {
+import com.igirerwanda.application_portal_backend.auth.dto.RegisterRequest;
+import com.igirerwanda.application_portal_backend.auth.dto.RegisterResponse;
+
+public interface AuthService {
+    RegisterResponse register(RegisterRequest request);
 }
