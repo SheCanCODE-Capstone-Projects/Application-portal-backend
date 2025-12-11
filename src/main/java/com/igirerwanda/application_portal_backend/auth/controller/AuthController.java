@@ -1,11 +1,10 @@
 package com.igirerwanda.application_portal_backend.auth.controller;
 
 import com.igirerwanda.application_portal_backend.auth.dto.RegisterRequest;
-import com.igirerwanda.application_portal_backend.auth.dto.RegisterResponse;
 import com.igirerwanda.application_portal_backend.auth.service.AuthService;
+import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

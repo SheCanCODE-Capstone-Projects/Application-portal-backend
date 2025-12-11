@@ -1,8 +1,8 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
 import com.igirerwanda.application_portal_backend.auth.dto.RegisterRequest;
-import com.igirerwanda.application_portal_backend.auth.dto.RegisterResponse;
+import org.springframework.http.ResponseEntity;
 
 public interface AuthService {
-    RegisterResponse register(RegisterRequest request);
+    ResponseEntity<?> register(RegisterRequest request);
 }
