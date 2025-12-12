@@ -53,8 +53,8 @@ jobs:
     - name: Test Docker Compose
       run: |
         cp .env.example .env
-        docker-compose up -d
+        docker compose up -d
         sleep 30
-        docker-compose ps
-        docker-compose logs
-        docker-compose down -v
+        docker compose ps
+        docker compose logs
+        docker compose down -v

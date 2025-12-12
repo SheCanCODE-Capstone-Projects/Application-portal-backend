@@ -1,57 +1,49 @@
-
-version: '3.9'
-
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: application-portal-postgres
-    restart: unless-stopped
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db_init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
     networks:
       - app-network
-    env_file:
-      - .env
 
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: application-portal-backend
-    restart: unless-stopped
-    ports:
-      - "${BACKEND_PORT}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: false
-      APP_JWT_SECRET: ${JWT_SECRET}
-      APP_JWT_EXPIRATION_MS: 86400000
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      APP_ADMIN_BOOTSTRAP_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - app-network
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8085:${BACKEND_PORT}"
     volumes:
       - ./logs:/app/logs
-    env_file:
-      - .env
+    restart: unless-stopped
+    networks:
+      - app-network
 
 networks:
   app-network:
@@ -59,4 +51,3 @@ networks:
 
 volumes:
   postgres_data:
-    driver: local
