@@ -1,4 +1,6 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
-public class AuthService {
+public interface AuthService {
+    void initiatePasswordReset(String email);
+    void resetPassword(String token, String newPassword);
 }
