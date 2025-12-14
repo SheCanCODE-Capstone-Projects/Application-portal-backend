@@ -1,6 +1,7 @@
 package com.igirerwanda.application_portal_backend.user.entity;
 
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
+import com.igirerwanda.application_portal_backend.common.enums.UserStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -28,6 +29,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role = UserRole.USER;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.PENDING_VERIFICATION;
     
     @Column(nullable = false)
     private boolean requirePasswordReset = false;
@@ -70,6 +75,9 @@ public class User {
     
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
+    
+    public UserStatus getStatus() { return status; }
+    public void setStatus(UserStatus status) { this.status = status; }
     
     public boolean isRequirePasswordReset() { return requirePasswordReset; }
     public void setRequirePasswordReset(boolean requirePasswordReset) { this.requirePasswordReset = requirePasswordReset; }

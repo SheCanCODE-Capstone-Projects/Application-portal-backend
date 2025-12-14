@@ -1,9 +1,16 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
+import com.igirerwanda.application_portal_backend.auth.dto.LoginRequest;
+import com.igirerwanda.application_portal_backend.auth.dto.LoginResponse;
 import com.igirerwanda.application_portal_backend.auth.entity.PasswordResetToken;
 import com.igirerwanda.application_portal_backend.auth.repository.PasswordResetTokenRepository;
 import com.igirerwanda.application_portal_backend.auth.repository.UserRepository;
+import com.igirerwanda.application_portal_backend.common.enums.UserStatus;
+import com.igirerwanda.application_portal_backend.config.JwtService;
 import com.igirerwanda.application_portal_backend.notification.service.EmailService;
+import com.igirerwanda.application_portal_backend.user.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +25,8 @@ import java.util.Base64;
 @Service
 public class AuthServiceImpl implements AuthService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
+
     @Autowired
     private UserRepository userRepository;
 
@@ -26,6 +35,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private JwtService jwtService;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final SecureRandom secureRandom = new SecureRandom();
@@ -82,6 +94,34 @@ public class AuthServiceImpl implements AuthService {
             return Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
             throw new RuntimeException("Error hashing token", e);
+        }
+    }
+
+    @Override
+    public LoginResponse authenticate(LoginRequest request) {
+        String normalizedEmail = request.getEmail().toLowerCase().trim();
+        
+        try {
+            User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+            
+            if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                logger.warn("Failed login attempt for email: {}", normalizedEmail);
+                throw new RuntimeException("Invalid credentials");
+            }
+            
+            if (user.getStatus() != UserStatus.ACTIVE) {
+                logger.warn("Login attempt by unverified user: {}", normalizedEmail);
+                throw new RuntimeException("Please verify your email before logging in.");
+            }
+            
+            String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole());
+            
+            logger.info("Successful login for user: {}", normalizedEmail);
+            return new LoginResponse(token, user.getRole(), user.getId());
+            
+        } catch (Exception e) {
+            logger.error("Authentication error for email: {}", normalizedEmail, e);
+            throw e;
         }
     }
 
