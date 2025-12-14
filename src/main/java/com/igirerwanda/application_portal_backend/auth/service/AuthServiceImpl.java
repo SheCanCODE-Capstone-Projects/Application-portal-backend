@@ -1,9 +1,15 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
+import com.igirerwanda.application_portal_backend.auth.entity.EmailVerificationToken;
 import com.igirerwanda.application_portal_backend.auth.entity.PasswordResetToken;
+import com.igirerwanda.application_portal_backend.auth.repository.EmailVerificationTokenRepository;
 import com.igirerwanda.application_portal_backend.auth.repository.PasswordResetTokenRepository;
 import com.igirerwanda.application_portal_backend.auth.repository.UserRepository;
+import com.igirerwanda.application_portal_backend.common.enums.UserStatus;
 import com.igirerwanda.application_portal_backend.notification.service.EmailService;
+import com.igirerwanda.application_portal_backend.user.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,11 +24,16 @@ import java.util.Base64;
 @Service
 public class AuthServiceImpl implements AuthService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
+
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Autowired
+    private EmailVerificationTokenRepository emailVerificationTokenRepository;
 
     @Autowired
     private EmailService emailService;
@@ -82,6 +93,51 @@ public class AuthServiceImpl implements AuthService {
             return Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
             throw new RuntimeException("Error hashing token", e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void resendVerificationEmail(String email) {
+        logger.info("Resend verification email requested for: {}", email);
+        
+        String normalizedEmail = email.toLowerCase().trim();
+        
+        try {
+            User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+            
+            if (user == null) {
+                logger.info("Resend verification attempted for non-existent email: {}", normalizedEmail);
+                return; // Silent return to avoid enumeration
+            }
+            
+            if (user.getStatus() != UserStatus.PENDING_VERIFICATION) {
+                logger.warn("Resend verification attempted for already verified user: {}", normalizedEmail);
+                throw new RuntimeException("User already verified");
+            }
+            
+            // Delete existing verification token
+            emailVerificationTokenRepository.deleteByUser(user);
+            
+            // Generate new verification token
+            String token = generateSecureToken();
+            EmailVerificationToken verificationToken = new EmailVerificationToken();
+            verificationToken.setUser(user);
+            verificationToken.setToken(token);
+            verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+            
+            emailVerificationTokenRepository.save(verificationToken);
+            
+            // Send verification email
+            emailService.sendVerificationEmail(normalizedEmail, token);
+            
+            logger.info("Verification email resent successfully for: {}", normalizedEmail);
+            
+        } catch (Exception e) {
+            logger.error("Error resending verification email for: {}", normalizedEmail, e);
+            if (e.getMessage().equals("User already verified")) {
+                throw e;
+            }
         }
     }
 

@@ -27,6 +27,8 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers("/api/v1/verify/resend").permitAll()
+                .requestMatchers("/api/v1/password/**").permitAll()
                 .requestMatchers("/api/v1/admin/users").hasAnyRole("SUPER_ADMIN", "ADMIN_MANAGE")
                 .anyRequest().authenticated()
             );
