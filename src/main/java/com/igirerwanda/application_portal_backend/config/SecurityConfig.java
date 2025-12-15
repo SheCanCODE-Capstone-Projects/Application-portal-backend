@@ -26,11 +26,18 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers(
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                        "/api/v1/auth/**",
+                        "/api/v1/auth/register",
+                        "/api/v1/auth/login"
+                ).permitAll()
                 .requestMatchers("/api/v1/admin/users").hasAnyRole("SUPER_ADMIN", "ADMIN_MANAGE")
                 .anyRequest().authenticated()
             );
-        
+
         return http.build();
     }
 }

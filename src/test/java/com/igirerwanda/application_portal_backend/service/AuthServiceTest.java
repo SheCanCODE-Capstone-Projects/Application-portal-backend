@@ -1,6 +1,5 @@
 package com.igirerwanda.application_portal_backend.service;
 
-import com.igirerwanda.application_portal_backend.auth.service.AuthServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 

@@ -1,6 +1,5 @@
 package com.igirerwanda.application_portal_backend.config;
 
-import com.igirerwanda.application_portal_backend.auth.repository.UserRepository;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;

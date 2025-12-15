@@ -40,7 +40,7 @@ public class AdminControllerTest {
         adminCreateDto = new AdminCreateDto();
         adminCreateDto.setEmail("admin@example.com");
         adminCreateDto.setFirstName("Alice");
-        adminCreateDto.setLastName("Admin");
+        adminCreateDto.setLastName("AdminUser");
         adminCreateDto.setPhone("+250712345678");
         adminCreateDto.setSetPassword("StrongP@ss123!");
         

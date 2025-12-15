@@ -3,7 +3,6 @@ package com.igirerwanda.application_portal_backend.service;
 import com.igirerwanda.application_portal_backend.admin.dto.AdminCreateDto;
 import com.igirerwanda.application_portal_backend.admin.dto.AdminResponseDto;
 import com.igirerwanda.application_portal_backend.admin.service.AdminServiceImpl;
-import com.igirerwanda.application_portal_backend.auth.repository.UserRepository;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
 import com.igirerwanda.application_portal_backend.user.entity.User;
@@ -39,7 +38,7 @@ public class AdminServiceTest {
         adminCreateDto = new AdminCreateDto();
         adminCreateDto.setEmail("admin@example.com");
         adminCreateDto.setFirstName("Alice");
-        adminCreateDto.setLastName("Admin");
+        adminCreateDto.setLastName("AdminUser");
         adminCreateDto.setPhone("+250712345678");
         adminCreateDto.setSetPassword("StrongP@ss123!");
     }
