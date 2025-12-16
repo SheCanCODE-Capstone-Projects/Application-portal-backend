@@ -1,6 +1,8 @@
 package com.igirerwanda.application_portal_backend.user.entity;
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
+import com.igirerwanda.application_portal_backend.common.enums.UserStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,9 +28,37 @@ public class User {
     @JoinColumn(name = "register_id", nullable = false)
     private Register register;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.ACTIVE;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public void setEmail(@Email String email) {
+        this.register.setEmail(email);
+    }
+
+    public String getEmail() {
+        return this.register.getEmail();
+    }
+    
+    public void setUsername(String username) {
+        this.register.setUsername(username);
+    }
+    
+    public String getUsername() {
+        return this.register.getUsername();
+    }
+    
+    public void setStatus(String status) {
+        this.status = UserStatus.valueOf(status);
+    }
+    
+    public String getStatus() {
+        return this.status.toString();
+    }
 }

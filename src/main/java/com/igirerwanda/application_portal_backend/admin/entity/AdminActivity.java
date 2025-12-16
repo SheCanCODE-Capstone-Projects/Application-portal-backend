@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.data.annotation.Id;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,7 +13,6 @@ import java.time.LocalDateTime;
 @Setter
 public class AdminActivity {
 
-    @jakarta.persistence.Id
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
