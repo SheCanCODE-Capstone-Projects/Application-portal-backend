@@ -42,9 +42,18 @@ ALTER TABLE cohort_requirements
     ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
     ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW();
 
-ALTER TABLE cohort_requirements
-    ADD CONSTRAINT IF NOT EXISTS fk_cohort_requirements_cohort
-        FOREIGN KEY (cohort_id) REFERENCES cohorts (id) ON DELETE CASCADE;
+-- Add foreign key constraint (skip if exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'fk_cohort_requirements_cohort'
+    ) THEN
+        ALTER TABLE cohort_requirements
+            ADD CONSTRAINT fk_cohort_requirements_cohort
+                FOREIGN KEY (cohort_id) REFERENCES cohorts (id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_cohort_requirements_cohort_id
     ON cohort_requirements (cohort_id);
