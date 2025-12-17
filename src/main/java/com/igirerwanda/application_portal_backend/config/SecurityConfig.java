@@ -34,7 +34,7 @@ public class SecurityConfig {
                         "/api/v1/auth/register",
                         "/api/v1/auth/login"
                 ).permitAll()
-                .requestMatchers("/api/v1/admin/users").hasAnyRole("SUPER_ADMIN", "ADMIN_MANAGE")
+                .requestMatchers("/api/v1/admin/**").hasAnyRole("SUPER_ADMIN", "ADMIN_MANAGE")
                 .anyRequest().authenticated()
             );
 

@@ -40,4 +40,23 @@ public class PersonalInformation {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    // Relationships as per ERD
+    @OneToMany(mappedBy = "personalInformation", cascade = CascadeType.ALL)
+    private java.util.List<Document> documents;
+
+    @OneToMany(mappedBy = "personalInformation", cascade = CascadeType.ALL)
+    private java.util.List<EmergencyContact> emergencyContacts;
+
+    @OneToOne(mappedBy = "personalInformation", cascade = CascadeType.ALL)
+    private EducationOccupation educationOccupation;
+
+    @OneToOne(mappedBy = "personalInformation", cascade = CascadeType.ALL)
+    private MotivationAnswer motivationAnswer;
+
+    @OneToOne(mappedBy = "personalInformation", cascade = CascadeType.ALL)
+    private DisabilityInformation disabilityInformation;
+
+    @OneToOne(mappedBy = "personalInformation", cascade = CascadeType.ALL)
+    private VulnerabilityInformation vulnerabilityInformation;
 }

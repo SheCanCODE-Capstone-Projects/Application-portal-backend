@@ -45,4 +45,8 @@ public class Application {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    // Relationship: One application → One personal_information
+    @OneToOne(mappedBy = "application", cascade = CascadeType.ALL)
+    private PersonalInformation personalInformation;
 }
