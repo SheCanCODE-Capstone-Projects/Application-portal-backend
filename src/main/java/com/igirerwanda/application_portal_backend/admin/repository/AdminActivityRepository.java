@@ -8,6 +8,6 @@ import java.util.List;
 
 @Repository
 public interface AdminActivityRepository extends JpaRepository<AdminActivity, Long> {
-    List<AdminActivity> findByAdminEmailOrderByCreatedAtDesc(String email);
+    List<AdminActivity> findByAdmin_EmailOrderByCreatedAtDesc(String email);
     List<AdminActivity> findAllByOrderByCreatedAtDesc();
 }

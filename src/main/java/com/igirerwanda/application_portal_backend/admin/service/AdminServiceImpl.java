@@ -68,8 +68,8 @@ public class AdminServiceImpl implements AdminService {
         
         AdminUser savedAdmin = adminUserRepository.save(adminUser);
         
-        // Log admin activity
-        logAdminActivity("CREATED_ADMIN", "Created new admin: " + savedAdmin.getEmail());
+        // Log admin activity with the saved admin
+        logAdminActivityWithAdmin("CREATED_ADMIN", savedAdmin, "Created new admin: " + savedAdmin.getEmail());
         
         return mapToAdminResponseDto(savedAdmin);
     }
@@ -108,7 +108,7 @@ public class AdminServiceImpl implements AdminService {
         }
         
         AdminUser savedAdmin = adminUserRepository.save(admin);
-        logAdminActivity("UPDATED_ADMIN", "Updated admin: " + savedAdmin.getEmail());
+        logAdminActivityWithAdmin("UPDATED_ADMIN", savedAdmin, "Updated admin: " + savedAdmin.getEmail());
         
         return mapToAdminResponseDto(savedAdmin);
     }
@@ -118,8 +118,18 @@ public class AdminServiceImpl implements AdminService {
         AdminUser admin = adminUserRepository.findById(adminId)
                 .orElseThrow(() -> new NotFoundException("Admin not found with id: " + adminId));
         
-        logAdminActivity("DELETED_ADMIN", "Deleted admin: " + admin.getEmail());
+        // Delete all activities related to this admin first
+        adminActivityRepository.findByAdmin_EmailOrderByCreatedAtDesc(admin.getEmail())
+                .forEach(adminActivityRepository::delete);
+        
+        // Delete the admin user
         adminUserRepository.delete(admin);
+        
+        // Log deletion activity without admin reference
+        AdminActivity activity = new AdminActivity();
+        activity.setAction("DELETED_ADMIN");
+        activity.setEmail(admin.getEmail());
+        adminActivityRepository.save(activity);
     }
     
 
@@ -142,14 +152,28 @@ public class AdminServiceImpl implements AdminService {
         if (auth != null && auth.isAuthenticated()) {
             AdminActivity activity = new AdminActivity();
             activity.setAction(action);
-            activity.setEmail(auth.getName()); // Store the admin's email who performed the action
+            activity.setEmail(auth.getName());
             
             // Try to find the AdminUser by email and set the relationship
             adminUserRepository.findByEmail(auth.getName())
                 .ifPresent(activity::setAdmin);
             
             adminActivityRepository.save(activity);
+        } else {
+            AdminActivity activity = new AdminActivity();
+            activity.setAction(action);
+            activity.setEmail("system");
+            adminActivityRepository.save(activity);
         }
+    }
+    
+    private void logAdminActivityWithAdmin(String action, AdminUser targetAdmin, String details) {
+        AdminActivity activity = new AdminActivity();
+        activity.setAction(action);
+        activity.setEmail(targetAdmin.getEmail());
+        activity.setAdmin(targetAdmin);
+        
+        adminActivityRepository.save(activity);
     }
     
 
