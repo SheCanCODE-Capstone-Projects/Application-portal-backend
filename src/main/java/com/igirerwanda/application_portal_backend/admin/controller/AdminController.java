@@ -39,7 +39,7 @@ public class AdminController {
 
     
     // Admin CRUD Operations
-    @Operation(summary = "Get all Users", description = "Register User")
+    @Operation(summary = "Get all Users", description = "Get all User")
     @GetMapping("/admins_Users")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<List<AdminResponseDto>>> getAllUsers() {
@@ -47,14 +47,14 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("All users retrieved successfully!", admins));
     }
 
-    @Operation(summary = "Get User by Id", description = "Register User")
+    @Operation(summary = "Get User by Id", description = "Get user by id ")
     @GetMapping("/admins_users/{adminId}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<AdminResponseDto>> getUsersById(@PathVariable Long adminId) {
         AdminResponseDto admin = adminService.getAdminById(adminId);
         return ResponseEntity.ok(ApiResponse.success("User retrieved successfully!", admin));
     }
-    @Operation(summary = "Update User by Id", description = "Register User")
+    @Operation(summary = "Update User by Id", description = "update User")
     @PutMapping("/admins_users/{adminId}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<AdminResponseDto>> updateUsers(
@@ -63,7 +63,7 @@ public class AdminController {
         AdminResponseDto updatedAdmin = adminService.updateAdmin(adminId, adminUpdateDto);
         return ResponseEntity.ok(ApiResponse.success("User updated successfully!", updatedAdmin));
     }
-    @Operation(summary = "Delete User by Id", description = "Register User")
+    @Operation(summary = "Delete User by Id", description = "Delete  User")
     @DeleteMapping("/admins_users/{adminId}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteUsers(@PathVariable Long adminId) {
