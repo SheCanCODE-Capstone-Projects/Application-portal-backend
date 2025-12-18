@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "register")
@@ -16,8 +17,8 @@ import java.time.LocalDateTime;
 public class Register {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    private UUID id;
 
     @Column(unique = true, nullable = false)
     private String email;
@@ -38,7 +39,6 @@ public class Register {
     @Column(nullable = false)
     private AuthProvider provider = AuthProvider.LOCAL;
 
-    // Only set for Google users
     @Column(unique = true)
     private String providerId;
 
@@ -49,6 +49,14 @@ public class Register {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+    }
 }
+
 
 
