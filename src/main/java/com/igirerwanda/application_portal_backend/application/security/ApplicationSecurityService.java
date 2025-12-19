@@ -2,6 +2,7 @@ package com.igirerwanda.application_portal_backend.application.security;
 
 import com.igirerwanda.application_portal_backend.application.dto.ApplicationDto;
 import com.igirerwanda.application_portal_backend.application.service.ApplicationService;
+import com.igirerwanda.application_portal_backend.common.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -11,11 +12,10 @@ import org.springframework.stereotype.Service;
 public class ApplicationSecurityService {
 
     private final ApplicationService applicationService;
+    private final JwtUtil jwtUtil;
 
     public Long getUserIdFromAuth(Authentication auth) {
-        String email = auth.getName();
-        // TODO: Implement proper user ID extraction from JWT claims
-        return 1L; // Placeholder
+        return jwtUtil.getCurrentUserId();
     }
 
     public void validateUserOwnsApplication(Long applicationId, Authentication auth) {

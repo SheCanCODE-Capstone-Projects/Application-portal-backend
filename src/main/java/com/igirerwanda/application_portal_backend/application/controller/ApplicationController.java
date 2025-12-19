@@ -3,6 +3,7 @@ package com.igirerwanda.application_portal_backend.application.controller;
 import com.igirerwanda.application_portal_backend.application.dto.*;
 import com.igirerwanda.application_portal_backend.application.service.ApplicationService;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
+import com.igirerwanda.application_portal_backend.common.util.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class ApplicationController {
 
     private final ApplicationService applicationService;
+    private final JwtUtil jwtUtil;
 
     @PostMapping
     public ResponseEntity<ApplicationDto> createApplication(
@@ -156,8 +158,7 @@ public class ApplicationController {
     }
 
     private Long getUserIdFromAuth(Authentication auth) {
-        // TODO: Coordinate with auth team for proper JWT user ID extraction
-        // This should use their JWT service or user principal implementation
-        return 1L; // Placeholder - auth team will provide proper implementation
+        // Extract user ID from JWT token in request header
+        return jwtUtil.getCurrentUserId();
     }
 }
