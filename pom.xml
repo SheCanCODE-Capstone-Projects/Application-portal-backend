@@ -103,17 +103,7 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-<!--        migration -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-            <version>10.21.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-            <version>10.21.0</version>
-        </dependency>
+<!-- Flyway removed - using Spring Data JPA + Hibernate DDL instead -->
 
     </dependencies>
 
