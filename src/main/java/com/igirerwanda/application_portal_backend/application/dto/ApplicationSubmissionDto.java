@@ -1,28 +1,39 @@
 package com.igirerwanda.application_portal_backend.application.dto;
 
-import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
 @Setter
-public class ApplicationDto {
-    private Long id;
-    private Long userId;
+public class ApplicationSubmissionDto {
+    @NotNull(message = "Cohort ID is required")
     private Long cohortId;
-    private String cohortName;
-    private ApplicationStatus status;
-    private boolean isSystemRejected;
-    private LocalDateTime submittedAt;
-    private LocalDateTime createdAt;
+    
+    @NotNull(message = "Personal information is required")
+    @Valid
     private PersonalInfoDto personalInfo;
+    
+    @NotNull(message = "Education information is required")
+    @Valid
     private EducationDto education;
+    
+    @NotNull(message = "Motivation information is required")
+    @Valid
     private MotivationDto motivation;
+    
+    @Valid
     private List<DocumentDto> documents;
+    
+    @Valid
     private List<EmergencyContactDto> emergencyContacts;
+    
+    @Valid
     private DisabilityDto disability;
+    
+    @Valid
     private VulnerabilityDto vulnerability;
 }

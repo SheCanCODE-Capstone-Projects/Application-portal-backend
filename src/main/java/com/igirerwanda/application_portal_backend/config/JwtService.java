@@ -24,6 +24,7 @@ public class JwtService {
     public String generateToken(Register user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
+                .claim("userId", user.getId())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
@@ -35,6 +36,7 @@ public class JwtService {
     public String generateRefreshToken(Register user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
+                .claim("userId", user.getId())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
@@ -66,9 +68,19 @@ public class JwtService {
         return extractEmail(token);
     }
 
+    public Long extractUserId(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("userId", Long.class);
+    }
+
     public String generateAccessToken(Register user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())               // who the user is
+                .claim("userId", user.getId())             // user identification
                 .claim("role", user.getRole().name())      // authorization
                 .setIssuedAt(new Date())
                 .setExpiration(

@@ -65,7 +65,7 @@ public class SecurityConfig {
                         "/api/v1/auth/**",
                         "/login/oauth2/code/google"
                 ).permitAll()
-                .requestMatchers("/api/v1/admin/users").hasAnyRole("SUPER_ADMIN", "ADMIN_MANAGE")
+                .requestMatchers("/api/v1/admin/**").hasAnyRole("SUPER_ADMIN", "ADMIN_MANAGE")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

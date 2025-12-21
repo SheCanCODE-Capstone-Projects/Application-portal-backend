@@ -109,7 +109,7 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-
+<!-- Flyway removed - using Spring Data JPA + Hibernate DDL instead -->
 
     </dependencies>
 
