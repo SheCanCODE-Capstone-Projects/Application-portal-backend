@@ -40,7 +40,7 @@ public class LoginService {
         }
 
         String token = jwtService.generateToken(user);
-        return new LoginResponse(token, user.getRole().name());
+        return new LoginResponse(token);
     }
 }
 
