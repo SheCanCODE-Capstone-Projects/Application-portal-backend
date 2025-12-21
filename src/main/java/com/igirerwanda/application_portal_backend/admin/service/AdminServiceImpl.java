@@ -75,8 +75,10 @@ public class AdminServiceImpl implements AdminService {
     }
     
     @Override
-    public List<AdminActivity> getAdminActivities() {
-        return adminActivityRepository.findAllByOrderByCreatedAtDesc();
+    public List<AdminActivityResponseDto> getAdminActivities() {
+        return adminActivityRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(this::mapToAdminActivityResponseDto)
+                .collect(Collectors.toList());
     }
     
 
@@ -135,6 +137,16 @@ public class AdminServiceImpl implements AdminService {
 
 
 
+    
+    private AdminActivityResponseDto mapToAdminActivityResponseDto(AdminActivity activity) {
+        AdminActivityResponseDto dto = new AdminActivityResponseDto();
+        dto.setId(activity.getId());
+        dto.setAction(activity.getAction());
+        dto.setCreatedAt(activity.getCreatedAt());
+        dto.setAdminName(activity.getAdminName());
+        dto.setAdminEmail(activity.getAdminEmail());
+        return dto;
+    }
     
     private AdminResponseDto mapToAdminResponseDto(AdminUser adminUser) {
         AdminResponseDto dto = new AdminResponseDto();

@@ -1,13 +1,14 @@
 package com.igirerwanda.application_portal_backend.admin.service;
 
-import com.igirerwanda.application_portal_backend.admin.dto.*;
-import com.igirerwanda.application_portal_backend.admin.entity.AdminActivity;
+import com.igirerwanda.application_portal_backend.admin.dto.AdminCreateDto;
+import com.igirerwanda.application_portal_backend.admin.dto.AdminResponseDto;
+import com.igirerwanda.application_portal_backend.admin.dto.AdminActivityResponseDto;
 
 import java.util.List;
 
 public interface AdminService {
     AdminResponseDto createAdmin(AdminCreateDto adminCreateDto);
-    List<AdminActivity> getAdminActivities();
+    List<AdminActivityResponseDto> getAdminActivities();
     
 
     

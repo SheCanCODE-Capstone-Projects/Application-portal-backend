@@ -10,14 +10,6 @@ public class AdminActivityResponseDto {
     private Long id;
     private String action;
     private LocalDateTime createdAt;
-    private String email;
-    
-    // Admin details
-    private Long adminId;
     private String adminName;
     private String adminEmail;
-    
-    // Application details (if applicable)
-    private Long applicationId;
-    private String applicantName;
 }
