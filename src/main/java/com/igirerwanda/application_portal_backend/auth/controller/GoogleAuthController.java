@@ -1,47 +1,21 @@
 package com.igirerwanda.application_portal_backend.auth.controller;
 
-import com.igirerwanda.application_portal_backend.auth.dto.GoogleAuthDto;
-import com.igirerwanda.application_portal_backend.auth.service.GoogleAuthService;
-import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/auth/google")
 public class GoogleAuthController {
 
-    private final GoogleAuthService googleAuthService;
-
-    public GoogleAuthController(GoogleAuthService googleAuthService) {
-        this.googleAuthService = googleAuthService;
+    @GetMapping("/login")
+    public void login(HttpServletResponse response) throws IOException {
+        response.sendRedirect("/oauth2/authorization/google");
     }
 
-
-    @PostMapping("/google/signup")
-    public ResponseEntity<?> googleSignup(@RequestBody GoogleAuthDto dto) {
-
-        var user = googleAuthService.signupWithGoogle(
-                dto.getEmail(),
-                dto.getGoogleId(),
-                dto.getName()
-        );
-
-        return ResponseEntity.ok(Map.of(
-                "message", "Google signup successful",
-                "userId", user.getId()
-        ));
-    }
-
-
-    @PostMapping("/google/login")
-    public ResponseEntity<?> googleLogin(@RequestBody GoogleAuthDto dto) {
-
-        return ResponseEntity.ok(
-                googleAuthService.loginWithGoogle(
-                        dto.getEmail(),
-                        dto.getGoogleId()
-                )
-        );
+    @GetMapping("/signup")
+    public void signup(HttpServletResponse response) throws IOException {
+        response.sendRedirect("/oauth2/authorization/google?prompt=select_account");
     }
 }

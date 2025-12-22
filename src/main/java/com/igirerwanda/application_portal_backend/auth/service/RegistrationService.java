@@ -3,7 +3,6 @@ package com.igirerwanda.application_portal_backend.auth.service;
 import com.igirerwanda.application_portal_backend.auth.dto.RegisterRequest;
 import com.igirerwanda.application_portal_backend.auth.entity.EmailVerificationToken;
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
-import com.igirerwanda.application_portal_backend.auth.exception.BadRequestException;
 import com.igirerwanda.application_portal_backend.auth.repository.EmailVerificationTokenRepository;
 import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
@@ -45,6 +44,7 @@ public class RegistrationService {
         }
 
         Register user = new Register();
+        user.setId(UUID.randomUUID());
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
         user.setPassword(encoder.encode(request.getPassword()));

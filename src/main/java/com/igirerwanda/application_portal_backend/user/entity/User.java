@@ -1,6 +1,6 @@
 package com.igirerwanda.application_portal_backend.user.entity;
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
-import com.igirerwanda.application_portal_backend.common.enums.UserStatus;
+import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
@@ -28,9 +28,9 @@ public class User {
     @JoinColumn(name = "register_id", nullable = false)
     private Register register;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserStatus status = UserStatus.ACTIVE;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cohort_id", nullable = false)
+    private Cohort cohort;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -62,3 +62,4 @@ public class User {
         return this.status.toString();
     }
 }
+

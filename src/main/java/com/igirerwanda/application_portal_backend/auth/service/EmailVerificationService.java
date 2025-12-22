@@ -20,14 +20,17 @@ public class EmailVerificationService {
     private final EmailVerificationTokenRepository tokenRepo;
     private final RegisterRepository registerRepo;
     private final EmailService emailService;
+    private final UserPromotionService userPromotionService;
 
     public EmailVerificationService(
             EmailVerificationTokenRepository tokenRepo,
             RegisterRepository registerRepo,
-            EmailService emailService) {
+            EmailService emailService,
+            UserPromotionService userPromotionService, UserPromotionService userPromotionService1) {
         this.tokenRepo = tokenRepo;
         this.registerRepo = registerRepo;
         this.emailService = emailService;
+        this.userPromotionService = userPromotionService1;
     }
 
     public Map<String, String> verify(String tokenValue) {
@@ -76,6 +79,8 @@ public class EmailVerificationService {
         token.setExpiryDate(LocalDateTime.now().plusHours(24));
 
         tokenRepo.save(token);
+
+        userPromotionService.promote(user);
 
         emailService.sendVerificationEmail(user, token.getToken());
 

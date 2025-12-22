@@ -1,61 +1,57 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
-import com.igirerwanda.application_portal_backend.auth.dto.LoginResponse;
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
 import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
 import com.igirerwanda.application_portal_backend.common.enums.AuthProvider;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
-import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
-import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
-import com.igirerwanda.application_portal_backend.common.exception.ValidationException;
 import com.igirerwanda.application_portal_backend.config.JwtService;
 import org.springframework.stereotype.Service;
 
 @Service
 public class GoogleAuthService {
 
-    private final RegisterRepository registerRepo;
+    private final RegisterRepository registerRepository;
     private final JwtService jwtService;
 
-    public GoogleAuthService(RegisterRepository registerRepo, JwtService jwtService) {
-        this.registerRepo = registerRepo;
+    public GoogleAuthService(RegisterRepository registerRepository,
+                             JwtService jwtService,
+                             UserPromotionService userPromotionService, UserPromotionService userPromotionService1) {
+        this.registerRepository = registerRepository;
         this.jwtService = jwtService;
+
     }
 
+    public String handleGoogleLogin(String email, String googleId, String name) {
 
-    public Register signupWithGoogle(String email, String googleId, String name) {
+        Register user = registerRepository.findByEmail(email)
+                .map(existing -> {
+                    if (existing.getProvider() != AuthProvider.GOOGLE) {
+                        throw new IllegalStateException(
+                                "Email already registered with another provider"
+                        );
+                    }
 
-        if (registerRepo.findByEmail(email).isPresent()) {
-            throw new DuplicateResourceException(
-                    "User already exists, please login"
-            );
-        }
+                    if (existing.getGoogleId() != null &&
+                            !existing.getGoogleId().equals(googleId)) {
+                        throw new IllegalStateException("Google account mismatch");
+                    }
 
-        Register user = new Register();
-        user.setEmail(email);
-        user.setGoogleId(googleId);
-        user.setUsername(name);
-        user.setVerified(true);
-        user.setProvider(AuthProvider.GOOGLE);
-        user.setRole(UserRole.APPLICANT);
+                    return existing;
+                })
+                .orElseGet(() -> {
+                    Register newUser = new Register();
+                    newUser.setEmail(email);
+                    newUser.setGoogleId(googleId);
+                    newUser.setUsername(name);
+                    newUser.setVerified(true);
+                    newUser.setProvider(AuthProvider.GOOGLE);
+                    newUser.setRole(UserRole.APPLICANT);
+                    return registerRepository.save(newUser);
+                });
 
-        return registerRepo.save(user);
-    }
+        UserPromotionService userPromotionService = null;
+        userPromotionService.promote(user);
 
-
-    public LoginResponse loginWithGoogle(String email, String googleId) {
-
-        Register user = registerRepo.findByEmail(email)
-                .orElseThrow(() ->
-                        new NotFoundException("User not registered")
-                );
-
-        if (!googleId.equals(user.getGoogleId())) {
-            throw new ValidationException("Invalid Google account");
-        }
-
-        String token = jwtService.generateAccessToken(user);
-        return new LoginResponse(token, user.getRole().name());
+        return jwtService.generateAccessToken(user);
     }
 }
-

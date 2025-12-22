@@ -27,10 +27,12 @@ public class Application {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cohort_id", nullable = false)
     private Cohort cohort;
 
     @Enumerated(EnumType.STRING)
@@ -45,4 +47,8 @@ public class Application {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    // Relationship: One application → One personal_information
+    @OneToOne(mappedBy = "application", cascade = CascadeType.ALL)
+    private PersonalInformation personalInformation;
 }
