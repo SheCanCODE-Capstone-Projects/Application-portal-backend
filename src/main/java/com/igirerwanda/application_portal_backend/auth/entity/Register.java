@@ -2,6 +2,7 @@ package com.igirerwanda.application_portal_backend.auth.entity;
 
 import com.igirerwanda.application_portal_backend.common.enums.AuthProvider;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
+import com.igirerwanda.application_portal_backend.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -43,6 +44,9 @@ public class Register {
     private String providerId;
 
     private boolean isVerified = false;
+
+    @OneToOne(mappedBy = "register", cascade = CascadeType.ALL)
+    private User user;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
