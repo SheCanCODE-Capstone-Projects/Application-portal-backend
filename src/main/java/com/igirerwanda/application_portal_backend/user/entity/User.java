@@ -1,5 +1,6 @@
 package com.igirerwanda.application_portal_backend.user.entity;
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
+import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,9 +27,14 @@ public class User {
     @JoinColumn(name = "register_id", nullable = false)
     private Register register;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cohort_id", nullable = false)
+    private Cohort cohort;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 }
+

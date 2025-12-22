@@ -3,7 +3,6 @@ package com.igirerwanda.application_portal_backend.auth.service;
 import com.igirerwanda.application_portal_backend.auth.dto.RegisterRequest;
 import com.igirerwanda.application_portal_backend.auth.entity.EmailVerificationToken;
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
-import com.igirerwanda.application_portal_backend.auth.exception.BadRequestException;
 import com.igirerwanda.application_portal_backend.auth.repository.EmailVerificationTokenRepository;
 import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
