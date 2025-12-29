@@ -11,6 +11,6 @@ public class CohortDto {
     private String name;
     private String description;
     private List<String> requirements;
-    private List<CohortRuleDto> rules;
+    private List<String> rules;
     private List<UserRole> roles;
 }

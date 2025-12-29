@@ -29,9 +29,8 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
-                        .requestMatchers("/api/v1/cohorts/frontend").permitAll()
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/v1/**").permitAll()
+                        .anyRequest().permitAll()
                 );
 
         return http.build();
