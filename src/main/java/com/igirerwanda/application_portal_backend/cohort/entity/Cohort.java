@@ -1,5 +1,6 @@
 package com.igirerwanda.application_portal_backend.cohort.entity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -12,6 +13,7 @@ import java.util.List;
 @Table(name = "cohorts")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
+@Builder
 public class Cohort {
 
     @Id
@@ -32,4 +34,7 @@ public class Cohort {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-}
+
+
+    }
+

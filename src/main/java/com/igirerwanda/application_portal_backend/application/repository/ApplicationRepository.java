@@ -15,6 +15,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     List<Application> findByCohortId(Long cohortId);
     List<Application> findByStatus(ApplicationStatus status);
     Optional<Application> findByUserIdAndCohortId(Long userId, Long cohortId);
+    Optional<Application> findByUserRegisterEmail(String email);
     long countByCohortIdAndStatus(Long cohortId, ApplicationStatus status);
     boolean existsByUserIdAndCohortId(Long userId, Long cohortId);
     
