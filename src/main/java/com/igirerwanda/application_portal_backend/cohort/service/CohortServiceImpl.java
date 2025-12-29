@@ -7,12 +7,23 @@ import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import com.igirerwanda.application_portal_backend.cohort.mapper.CohortMapper;
 import com.igirerwanda.application_portal_backend.cohort.repository.CohortRepository;
 import com.igirerwanda.application_portal_backend.cohort.service.CohortService;
+import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+
+
 @Service
 public class CohortServiceImpl implements CohortService {
+
+    private final CohortRepository repository;
+
+
+    public CohortServiceImpl(CohortRepository repository) {
+        this.repository = repository;
+    }
 
 
     @Override
@@ -32,6 +43,7 @@ public class CohortServiceImpl implements CohortService {
 
     @Override
     public CohortDto getCohortById(Long id) {
+
         Cohort cohort = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cohort not found with id: " + id));
         return CohortMapper.toDto(cohort);
