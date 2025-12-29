@@ -6,13 +6,14 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
 public class ApplicationDto {
-    private Long id;
-    private Long userId;
-    private Long cohortId;
+    private UUID id;
+    private UUID userId;
+    private UUID cohortId;
     private String cohortName;
     private ApplicationStatus status;
     private boolean isSystemRejected;

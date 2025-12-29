@@ -8,14 +8,17 @@ import com.igirerwanda.application_portal_backend.cohort.repository.CohortReposi
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
+import com.igirerwanda.application_portal_backend.notification.service.NotificationService;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.user.service.UserService;
+import com.igirerwanda.application_portal_backend.application.service.ApplicationValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,14 +37,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final CohortRepository cohortRepository;
     private final UserService userService;
     private final ApplicationValidationService validationService;
+    private final NotificationService notificationService;
 
     @Override
-    public ApplicationDto createApplication(Long userId, ApplicationCreateDto dto) {
-        // Check if application already exists
-        if (applicationRepository.existsByUserIdAndCohortId(userId, dto.getCohortId())) {
-            throw new DuplicateResourceException("Application already exists for this cohort");
-        }
-
+    public ApplicationDto createApplication(UUID userId, ApplicationCreateDto dto) {
         User user = userService.findById(userId);
         Cohort cohort = cohortRepository.findById(dto.getCohortId())
                 .orElseThrow(() -> new NotFoundException("Cohort not found"));
@@ -56,14 +55,13 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDto submitCompleteApplication(Long userId, ApplicationSubmissionDto dto) {
+    public ApplicationDto submitCompleteApplication(UUID userId, ApplicationSubmissionDto dto) {
         ApplicationCreateDto createDto = new ApplicationCreateDto();
         createDto.setCohortId(dto.getCohortId());
         ApplicationDto application = createApplication(userId, createDto);
         
-        Long appId = application.getId();
+        UUID appId = application.getId();
         
-        // Save all sections
         updatePersonalInfo(appId, dto.getPersonalInfo());
         updateEducation(appId, dto.getEducation());
         updateMotivation(appId, dto.getMotivation());
@@ -88,7 +86,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDto updatePersonalInfo(Long applicationId, PersonalInfoDto dto) {
+    public ApplicationDto updatePersonalInfo(UUID applicationId, PersonalInfoDto dto) {
         Application application = findApplicationById(applicationId);
         
         PersonalInformation personalInfo = application.getPersonalInformation();
@@ -109,7 +107,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDto updateEducation(Long applicationId, EducationDto dto) {
+    public ApplicationDto updateEducation(UUID applicationId, EducationDto dto) {
         Application application = findApplicationById(applicationId);
         PersonalInformation personalInfo = getOrCreatePersonalInfo(application);
         
@@ -129,7 +127,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDto updateMotivation(Long applicationId, MotivationDto dto) {
+    public ApplicationDto updateMotivation(UUID applicationId, MotivationDto dto) {
         Application application = findApplicationById(applicationId);
         PersonalInformation personalInfo = getOrCreatePersonalInfo(application);
         
@@ -148,7 +146,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDto addDocument(Long applicationId, DocumentDto dto) {
+    public ApplicationDto addDocument(UUID applicationId, DocumentDto dto) {
         Application application = findApplicationById(applicationId);
         PersonalInformation personalInfo = getOrCreatePersonalInfo(application);
         
@@ -162,7 +160,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDto addEmergencyContact(Long applicationId, EmergencyContactDto dto) {
+    public ApplicationDto addEmergencyContact(UUID applicationId, EmergencyContactDto dto) {
         Application application = findApplicationById(applicationId);
         PersonalInformation personalInfo = getOrCreatePersonalInfo(application);
         
@@ -177,7 +175,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDto updateDisability(Long applicationId, DisabilityDto dto) {
+    public ApplicationDto updateDisability(UUID applicationId, DisabilityDto dto) {
         Application application = findApplicationById(applicationId);
         PersonalInformation personalInfo = getOrCreatePersonalInfo(application);
         
@@ -196,7 +194,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDto updateVulnerability(Long applicationId, VulnerabilityDto dto) {
+    public ApplicationDto updateVulnerability(UUID applicationId, VulnerabilityDto dto) {
         Application application = findApplicationById(applicationId);
         PersonalInformation personalInfo = getOrCreatePersonalInfo(application);
         
@@ -215,29 +213,79 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDto submitApplication(Long applicationId) {
+    public ApplicationDto submitApplication(UUID applicationId) {
         Application application = findApplicationById(applicationId);
         
-        // Validate application completeness
         validationService.validateForSubmission(application);
         
         application.setStatus(ApplicationStatus.SUBMITTED);
         application.setSubmittedAt(LocalDateTime.now());
         
         application = applicationRepository.save(application);
+        
+        notificationService.sendApplicationSubmittedNotification(
+            application.getUser().getId(), 
+            application.getId()
+        );
+        
         return mapToDto(application);
     }
 
     @Override
+    public ApplicationDto updateApplicationStatus(UUID applicationId, ApplicationStatus status) {
+        Application application = findApplicationById(applicationId);
+        ApplicationStatus oldStatus = application.getStatus();
+        
+        application.setStatus(status);
+        application = applicationRepository.save(application);
+        
+        UUID userId = application.getUser().getId();
+        switch (status) {
+            case UNDER_REVIEW -> {
+                if (oldStatus != ApplicationStatus.UNDER_REVIEW) {
+                    notificationService.sendApplicationUnderReviewNotification(userId, applicationId);
+                }
+            }
+            case APPROVED -> {
+                if (oldStatus != ApplicationStatus.APPROVED) {
+                    notificationService.sendApplicationAcceptedNotification(userId, applicationId);
+                }
+            }
+            case REJECTED, SYSTEM_REJECTED -> {
+                if (oldStatus != ApplicationStatus.REJECTED && oldStatus != ApplicationStatus.SYSTEM_REJECTED) {
+                    notificationService.sendApplicationRejectedNotification(userId, applicationId);
+                }
+            }
+        }
+        
+        return mapToDto(application);
+    }
+
+    @Override
+    public ApplicationDto approveApplication(UUID applicationId) {
+        return updateApplicationStatus(applicationId, ApplicationStatus.APPROVED);
+    }
+
+    @Override
+    public ApplicationDto rejectApplication(UUID applicationId) {
+        return updateApplicationStatus(applicationId, ApplicationStatus.REJECTED);
+    }
+
+    @Override
+    public ApplicationDto moveToReview(UUID applicationId) {
+        return updateApplicationStatus(applicationId, ApplicationStatus.UNDER_REVIEW);
+    }
+
+    @Override
     @Transactional(readOnly = true)
-    public ApplicationDto getApplication(Long applicationId) {
+    public ApplicationDto getApplication(UUID applicationId) {
         Application application = findApplicationById(applicationId);
         return mapToDto(application);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ApplicationDto> getUserApplications(Long userId) {
+    public List<ApplicationDto> getUserApplications(UUID userId) {
         List<Application> applications = applicationRepository.findByUserId(userId);
         return applications.stream().map(this::mapToDto).collect(Collectors.toList());
     }
@@ -250,24 +298,23 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public void deleteDocument(Long documentId) {
+    public void deleteDocument(UUID documentId) {
         documentRepository.deleteById(documentId);
     }
 
     @Override
-    public void deleteEmergencyContact(Long contactId) {
+    public void deleteEmergencyContact(UUID contactId) {
         emergencyContactRepository.deleteById(contactId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean isApplicationComplete(Long applicationId) {
+    public boolean isApplicationComplete(UUID applicationId) {
         Application application = findApplicationById(applicationId);
         return validationService.isApplicationComplete(application);
     }
 
-    // Helper methods
-    private Application findApplicationById(Long id) {
+    private Application findApplicationById(UUID id) {
         return applicationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Application not found"));
     }

@@ -60,6 +60,10 @@ public class Register {
             id = UUID.randomUUID();
         }
     }
+    
+    public boolean isEmailVerified() {
+        return isVerified;
+    }
 }
 
 

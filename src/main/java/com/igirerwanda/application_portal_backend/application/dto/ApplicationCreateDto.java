@@ -4,9 +4,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 public class ApplicationCreateDto {
     @NotNull(message = "Cohort ID is required")
-    private Long cohortId;
+    private UUID cohortId;
 }

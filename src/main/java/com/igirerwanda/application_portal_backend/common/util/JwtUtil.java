@@ -1,11 +1,13 @@
 package com.igirerwanda.application_portal_backend.common.util;
 
-import com.igirerwanda.application_portal_backend.config.JwtService;
+import com.igirerwanda.application_portal_backend.common.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -13,7 +15,7 @@ public class JwtUtil {
 
     private final JwtService jwtService;
 
-    public Long getCurrentUserId() {
+    public UUID getCurrentUserId() {
         String token = extractTokenFromRequest();
         if (token != null) {
             return jwtService.extractUserId(token);

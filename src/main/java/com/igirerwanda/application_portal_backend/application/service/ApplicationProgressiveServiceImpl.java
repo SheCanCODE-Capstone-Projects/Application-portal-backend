@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -17,39 +19,39 @@ public class ApplicationProgressiveServiceImpl implements ApplicationProgressive
     private final ApplicationRepository applicationRepository;
 
     @Override
-    public ApplicationDto savePersonalInfoStep(Long applicationId, PersonalInfoDto dto) {
+    public ApplicationDto savePersonalInfoStep(UUID applicationId, PersonalInfoDto dto) {
         return applicationService.updatePersonalInfo(applicationId, dto);
     }
 
     @Override
-    public ApplicationDto saveEducationStep(Long applicationId, EducationDto dto) {
+    public ApplicationDto saveEducationStep(UUID applicationId, EducationDto dto) {
         return applicationService.updateEducation(applicationId, dto);
     }
 
     @Override
-    public ApplicationDto saveMotivationStep(Long applicationId, MotivationDto dto) {
+    public ApplicationDto saveMotivationStep(UUID applicationId, MotivationDto dto) {
         return applicationService.updateMotivation(applicationId, dto);
     }
 
     @Override
-    public ApplicationDto saveDisabilityStep(Long applicationId, DisabilityDto dto) {
+    public ApplicationDto saveDisabilityStep(UUID applicationId, DisabilityDto dto) {
         return applicationService.updateDisability(applicationId, dto);
     }
 
     @Override
-    public ApplicationDto saveVulnerabilityStep(Long applicationId, VulnerabilityDto dto) {
+    public ApplicationDto saveVulnerabilityStep(UUID applicationId, VulnerabilityDto dto) {
         return applicationService.updateVulnerability(applicationId, dto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ApplicationDto getApplicationProgress(Long applicationId) {
+    public ApplicationDto getApplicationProgress(UUID applicationId) {
         return applicationService.getApplication(applicationId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public double calculateCompletionPercentage(Long applicationId) {
+    public double calculateCompletionPercentage(UUID applicationId) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new NotFoundException("Application not found"));
         

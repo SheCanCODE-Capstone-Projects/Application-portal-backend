@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/personal-info")
 @RequiredArgsConstructor
@@ -16,7 +18,7 @@ public class PersonalInfoController {
 
     @PutMapping("/application/{applicationId}")
     public ResponseEntity<ApplicationDto> updatePersonalInfo(
-            @PathVariable Long applicationId,
+            @PathVariable UUID applicationId,
             @RequestBody PersonalInfoDto dto) {
         ApplicationDto result = applicationService.updatePersonalInfo(applicationId, dto);
         return ResponseEntity.ok(result);

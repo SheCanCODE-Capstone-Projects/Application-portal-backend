@@ -2,12 +2,14 @@ package com.igirerwanda.application_portal_backend.application.service;
 
 import com.igirerwanda.application_portal_backend.application.dto.*;
 
+import java.util.UUID;
+
 public interface ApplicationProgressiveService {
-    ApplicationDto savePersonalInfoStep(Long applicationId, PersonalInfoDto dto);
-    ApplicationDto saveEducationStep(Long applicationId, EducationDto dto);
-    ApplicationDto saveMotivationStep(Long applicationId, MotivationDto dto);
-    ApplicationDto saveDisabilityStep(Long applicationId, DisabilityDto dto);
-    ApplicationDto saveVulnerabilityStep(Long applicationId, VulnerabilityDto dto);
-    ApplicationDto getApplicationProgress(Long applicationId);
-    double calculateCompletionPercentage(Long applicationId);
+    ApplicationDto savePersonalInfoStep(UUID applicationId, PersonalInfoDto dto);
+    ApplicationDto saveEducationStep(UUID applicationId, EducationDto dto);
+    ApplicationDto saveMotivationStep(UUID applicationId, MotivationDto dto);
+    ApplicationDto saveDisabilityStep(UUID applicationId, DisabilityDto dto);
+    ApplicationDto saveVulnerabilityStep(UUID applicationId, VulnerabilityDto dto);
+    ApplicationDto getApplicationProgress(UUID applicationId);
+    double calculateCompletionPercentage(UUID applicationId);
 }

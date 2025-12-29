@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Service
 public class JwtService {
@@ -70,13 +71,20 @@ public class JwtService {
         return extractEmail(token);
     }
 
-    public Long extractUserId(String token) {
-        return Jwts.parserBuilder()
+    public UUID extractUserId(String token) {
+        Object userIdClaim = Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
-                .get("userId", Long.class);
+                .get("userId");
+        
+        if (userIdClaim instanceof String) {
+            return UUID.fromString((String) userIdClaim);
+        } else if (userIdClaim instanceof UUID) {
+            return (UUID) userIdClaim;
+        }
+        throw new IllegalArgumentException("Invalid userId format in token");
     }
 
     public String generateAccessToken(Register user) {

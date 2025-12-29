@@ -13,6 +13,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -23,15 +24,15 @@ import java.time.LocalDateTime;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    private UUID id;
 
     @OneToOne
     @JoinColumn(name = "register_id", nullable = false)
     private Register register;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cohort_id", nullable = false)
+    @JoinColumn(name = "cohort_id")
     private Cohort cohort;
 
     @Enumerated(EnumType.STRING)
@@ -43,6 +44,13 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+    }
 
     // Delegate email to Register
     public void setEmail(@Email String email) {
