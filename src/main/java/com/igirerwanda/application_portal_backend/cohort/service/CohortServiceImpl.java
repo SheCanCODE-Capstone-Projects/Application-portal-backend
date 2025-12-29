@@ -66,7 +66,7 @@ public class CohortServiceImpl implements CohortService {
         
         if (dto.getName() != null && !dto.getName().equals(cohort.getName())) {
             repository.findByName(dto.getName()).ifPresent(c -> {
-                throw new RuntimeException("DuplicateResourceException: Cohort name already exists");
+                throw new DuplicateResourceException("Cohort name already exists");
             });
             cohort.setName(dto.getName());
         }
