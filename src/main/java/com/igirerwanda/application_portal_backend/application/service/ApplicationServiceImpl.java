@@ -225,6 +225,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setSubmittedAt(LocalDateTime.now());
         
         application = applicationRepository.save(application);
+        
         return mapToDto(application);
     }
 
@@ -292,37 +293,6 @@ public class ApplicationServiceImpl implements ApplicationService {
         dto.setSystemRejected(application.isSystemRejected());
         dto.setSubmittedAt(application.getSubmittedAt());
         dto.setCreatedAt(application.getCreatedAt());
-        
-        PersonalInformation personalInfo = application.getPersonalInformation();
-        if (personalInfo != null) {
-            dto.setPersonalInfo(mapPersonalInfoToDto(personalInfo));
-            
-            if (personalInfo.getEducationOccupation() != null) {
-                dto.setEducation(mapEducationToDto(personalInfo.getEducationOccupation()));
-            }
-            
-            if (personalInfo.getMotivationAnswer() != null) {
-                dto.setMotivation(mapMotivationToDto(personalInfo.getMotivationAnswer()));
-            }
-            
-            if (personalInfo.getDisabilityInformation() != null) {
-                dto.setDisability(mapDisabilityToDto(personalInfo.getDisabilityInformation()));
-            }
-            
-            if (personalInfo.getVulnerabilityInformation() != null) {
-                dto.setVulnerability(mapVulnerabilityToDto(personalInfo.getVulnerabilityInformation()));
-            }
-            
-            if (personalInfo.getDocuments() != null) {
-                dto.setDocuments(personalInfo.getDocuments().stream()
-                        .map(this::mapDocumentToDto).collect(Collectors.toList()));
-            }
-            
-            if (personalInfo.getEmergencyContacts() != null) {
-                dto.setEmergencyContacts(personalInfo.getEmergencyContacts().stream()
-                        .map(this::mapEmergencyContactToDto).collect(Collectors.toList()));
-            }
-        }
         
         return dto;
     }

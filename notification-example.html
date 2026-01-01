@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification System Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        .notification-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .notification-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .notification-item.unread {
+            background-color: #f0f8ff;
+            font-weight: bold;
+        }
+        .notification-title {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .notification-message {
+            font-size: 12px;
+            color: #666;
+        }
+        .notification-time {
+            font-size: 10px;
+            color: #999;
+            margin-top: 4px;
+        }
+        .notification-badge {
+            background: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Application Portal - Notification System Demo</h1>
+    
+    <div>
+        <button onclick="connectWebSocket()">Connect to Notifications</button>
+        <button onclick="fetchNotifications()">Fetch Notifications</button>
+        <button onclick="markAllAsRead()">Mark All as Read</button>
+        <span>Unread Count: <span id="unreadCount">0</span></span>
+    </div>
+
+    <div id="notificationPanel" class="notification-panel" style="display: none;">
+        <div style="padding: 12px; background: #f5f5f5; font-weight: bold;">
+            Notifications
+            <span id="unreadBadge" class="notification-badge" style="display: none;">0</span>
+        </div>
+        <div id="notificationList"></div>
+    </div>
+
+    <script>
+        let stompClient = null;
+        let notifications = [];
+        let authToken = 'your-jwt-token-here'; // Replace with actual JWT token
+
+        // WebSocket connection
+        function connectWebSocket() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            
+            stompClient.connect({
+                'Authorization': 'Bearer ' + authToken
+            }, function(frame) {
+                console.log('Connected: ' + frame);
+                
+                // Subscribe to user-specific notifications
+                stompClient.subscribe('/user/queue/notifications', function(notification) {
+                    const data = JSON.parse(notification.body);
+                    handleNewNotification(data);
+                });
+                
+                // Fetch existing notifications
+                fetchNotifications();
+                fetchUnreadCount();
+            }, function(error) {
+                console.error('WebSocket connection error:', error);
+            });
+        }
+
+        // Handle new real-time notification
+        function handleNewNotification(notification) {
+            notifications.unshift(notification);
+            displayNotifications();
+            updateUnreadCount();
+            showToast(notification);
+        }
+
+        // Fetch notifications from API
+        async function fetchNotifications() {
+            try {
+                const response = await fetch('/api/v1/notifications', {
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    notifications = await response.json();
+                    displayNotifications();
+                    document.getElementById('notificationPanel').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+            }
+        }
+
+        // Fetch unread count
+        async function fetchUnreadCount() {
+            try {
+                const response = await fetch('/api/v1/notifications/unread/count', {
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateUnreadCountDisplay(data.unreadCount);
+                }
+            } catch (error) {
+                console.error('Error fetching unread count:', error);
+            }
+        }
+
+        // Display notifications in panel
+        function displayNotifications() {
+            const listElement = document.getElementById('notificationList');
+            listElement.innerHTML = '';
+            
+            notifications.forEach(notification => {
+                const item = document.createElement('div');
+                item.className = `notification-item ${!notification.read ? 'unread' : ''}`;
+                item.onclick = () => markAsRead(notification.id);
+                
+                item.innerHTML = `
+                    <div class="notification-title">${notification.title}</div>
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-time">${formatTime(notification.createdAt)}</div>
+                `;
+                
+                listElement.appendChild(item);
+            });
+        }
+
+        // Mark notification as read
+        async function markAsRead(notificationId) {
+            try {
+                const response = await fetch(`/api/v1/notifications/${notificationId}/read`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken
+                    }
+                });
+                
+                if (response.ok) {
+                    // Update local notification
+                    const notification = notifications.find(n => n.id === notificationId);
+                    if (notification) {
+                        notification.read = true;
+                        notification.readAt = new Date().toISOString();
+                    }
+                    displayNotifications();
+                    updateUnreadCount();
+                }
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        // Mark all notifications as read
+        async function markAllAsRead() {
+            try {
+                const response = await fetch('/api/v1/notifications/read-all', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken
+                    }
+                });
+                
+                if (response.ok) {
+                    notifications.forEach(n => {
+                        n.read = true;
+                        n.readAt = new Date().toISOString();
+                    });
+                    displayNotifications();
+                    updateUnreadCount();
+                }
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+            }
+        }
+
+        // Update unread count
+        function updateUnreadCount() {
+            const unreadCount = notifications.filter(n => !n.read).length;
+            updateUnreadCountDisplay(unreadCount);
+        }
+
+        // Update unread count display
+        function updateUnreadCountDisplay(count) {
+            document.getElementById('unreadCount').textContent = count;
+            const badge = document.getElementById('unreadBadge');
+            
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'inline';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Show toast notification
+        function showToast(notification) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #333;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 4px;
+                z-index: 2000;
+                max-width: 400px;
+            `;
+            
+            toast.innerHTML = `
+                <strong>${notification.title}</strong><br>
+                ${notification.message}
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Remove toast after 5 seconds
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 5000);
+        }
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        // Auto-connect on page load
+        window.onload = function() {
+            // In a real application, you would get the JWT token from login
+            // connectWebSocket();
+        };
+    </script>
+</body>
+</html>

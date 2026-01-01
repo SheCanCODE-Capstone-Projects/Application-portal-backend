@@ -157,6 +157,36 @@ public class ApplicationController {
         return ResponseEntity.ok(Map.of("isComplete", isComplete));
     }
 
+    // Admin endpoints for status management
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ApplicationDto> updateApplicationStatus(
+            @PathVariable Long id,
+            @RequestBody ApplicationStatusDto statusDto) {
+        ApplicationDto result = applicationService.updateApplicationStatus(id, statusDto.getStatus());
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/{id}/schedule-interview")
+    public ResponseEntity<ApplicationDto> scheduleInterview(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request) {
+        String interviewDetails = request.get("interviewDetails");
+        ApplicationDto result = applicationService.scheduleInterview(id, interviewDetails);
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/{id}/accept")
+    public ResponseEntity<ApplicationDto> acceptApplication(@PathVariable Long id) {
+        ApplicationDto result = applicationService.acceptApplication(id);
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<ApplicationDto> rejectApplication(@PathVariable Long id) {
+        ApplicationDto result = applicationService.rejectApplication(id);
+        return ResponseEntity.ok(result);
+    }
+
     private Long getUserIdFromAuth(Authentication auth) {
         // Extract user ID from JWT token in request header
         return jwtUtil.getCurrentUserId();
