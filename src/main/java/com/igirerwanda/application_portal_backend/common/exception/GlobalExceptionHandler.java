@@ -53,12 +53,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.CONFLICT, "Data conflict", "The operation conflicts with existing data", request.getDescription(false));
     }
 
-    @ExceptionHandler(BusinessRuleException.class)
-    public ResponseEntity<Object> handleBusinessRule(BusinessRuleException ex, WebRequest request) {
-        log.warn("Business rule violation: {}", ex.getMessage());
-        return build(HttpStatus.UNPROCESSABLE_ENTITY, "Business rule violation", ex.getMessage(), request.getDescription(false));
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleUnexpected(Exception ex, WebRequest request) {
         log.error("Unexpected error occurred", ex);

@@ -22,4 +22,10 @@ public interface ApplicationService {
     boolean isApplicationComplete(Long applicationId);
     void deleteDocument(Long documentId);
     void deleteEmergencyContact(Long contactId);
+    
+    // Admin methods
+    ApplicationDto updateApplicationStatus(Long applicationId, ApplicationStatus status);
+    ApplicationDto scheduleInterview(Long applicationId, String interviewDetails);
+    ApplicationDto acceptApplication(Long applicationId);
+    ApplicationDto rejectApplication(Long applicationId);
 }

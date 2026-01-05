@@ -267,6 +267,42 @@ public class ApplicationServiceImpl implements ApplicationService {
         return validationService.isApplicationComplete(application);
     }
 
+    // Admin methods
+    @Override
+    public ApplicationDto updateApplicationStatus(Long applicationId, ApplicationStatus status) {
+        Application application = findApplicationById(applicationId);
+        application.setStatus(status);
+        application = applicationRepository.save(application);
+        return mapToDto(application);
+    }
+
+    @Override
+    public ApplicationDto scheduleInterview(Long applicationId, String interviewDetails) {
+        Application application = findApplicationById(applicationId);
+        application.setStatus(ApplicationStatus.INTERVIEW_SCHEDULED);
+        application = applicationRepository.save(application);
+        // TODO: Send interview notification
+        return mapToDto(application);
+    }
+
+    @Override
+    public ApplicationDto acceptApplication(Long applicationId) {
+        Application application = findApplicationById(applicationId);
+        application.setStatus(ApplicationStatus.ACCEPTED);
+        application = applicationRepository.save(application);
+        // TODO: Send acceptance notification
+        return mapToDto(application);
+    }
+
+    @Override
+    public ApplicationDto rejectApplication(Long applicationId) {
+        Application application = findApplicationById(applicationId);
+        application.setStatus(ApplicationStatus.REJECTED);
+        application = applicationRepository.save(application);
+        // TODO: Send rejection notification
+        return mapToDto(application);
+    }
+
     // Helper methods
     private Application findApplicationById(Long id) {
         return applicationRepository.findById(id)

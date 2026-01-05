@@ -44,7 +44,6 @@ public class RegistrationService {
         }
 
         Register user = new Register();
-        user.setId(UUID.randomUUID());
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
         user.setPassword(encoder.encode(request.getPassword()));
