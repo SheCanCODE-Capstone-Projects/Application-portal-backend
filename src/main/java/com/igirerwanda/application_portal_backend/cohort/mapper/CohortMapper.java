@@ -2,6 +2,7 @@ package com.igirerwanda.application_portal_backend.cohort.mapper;
 
 import com.igirerwanda.application_portal_backend.cohort.dto.CohortCreateDto;
 import com.igirerwanda.application_portal_backend.cohort.dto.CohortDto;
+import com.igirerwanda.application_portal_backend.cohort.dto.CohortUpdateDto;
 import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import org.springframework.stereotype.Component;
 
@@ -21,5 +22,23 @@ public class CohortMapper {
         dto.setName(entity.getName());
         dto.setDescription(entity.getDomain());
         return dto;
+    }
+
+    public static void updateEntity(Cohort entity, CohortUpdateDto dto) {
+        if (dto.getName() != null) {
+            entity.setName(dto.getName());
+        }
+        if (dto.getDescription() != null) {
+            entity.setDescription(dto.getDescription());
+        }
+        if (dto.getRequirements() != null) {
+            entity.setRequirements(dto.getRequirements());
+        }
+        if (dto.getRules() != null) {
+            entity.setRules(dto.getRules());
+        }
+        if (dto.getRoles() != null) {
+            entity.setRoles(dto.getRoles());
+        }
     }
 }
