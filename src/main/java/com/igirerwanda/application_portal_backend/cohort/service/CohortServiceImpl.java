@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+
+
 @Service
 @RequiredArgsConstructor
 public class CohortServiceImpl implements CohortService {
@@ -38,6 +40,7 @@ public class CohortServiceImpl implements CohortService {
 
     @Override
     public CohortDto getCohortById(Long id) {
+
         Cohort cohort = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cohort not found with id: " + id));
         return CohortMapper.toDto(cohort);
