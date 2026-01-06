@@ -1,5 +1,6 @@
 package com.igirerwanda.application_portal_backend.cohort.service;
 
+import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
 import com.igirerwanda.application_portal_backend.cohort.dto.CohortCreateDto;
 import com.igirerwanda.application_portal_backend.cohort.dto.CohortDto;
 import com.igirerwanda.application_portal_backend.cohort.dto.CohortUpdateDto;
@@ -13,7 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
+
 @Service
+@RequiredArgsConstructor
 public class CohortServiceImpl implements CohortService {
 
     private final CohortRepository repository;
@@ -53,6 +57,7 @@ public class CohortServiceImpl implements CohortService {
 
     @Override
     public CohortDto getCohortById(Long id) {
+
         Cohort cohort = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cohort not found with id: " + id));
         return CohortMapper.toDto(cohort);
@@ -68,9 +73,12 @@ public class CohortServiceImpl implements CohortService {
             repository.findByName(dto.getName()).ifPresent(c -> {
                 throw new DuplicateResourceException("Cohort name already exists");
             });
+            cohort.setName(dto.getName());
         }
         
-        CohortMapper.updateEntity(cohort, dto);
+        if (dto.getDescription() != null) {
+            cohort.setDomain(dto.getDescription());
+        }
         
         return CohortMapper.toDto(repository.save(cohort));
     }

@@ -1,5 +1,8 @@
 package com.igirerwanda.application_portal_backend.cohort.entity;
+
+import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -12,6 +15,7 @@ import java.util.List;
 @Table(name = "cohorts")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
+@Builder
 public class Cohort {
 
     @Id
@@ -24,6 +28,18 @@ public class Cohort {
     private Boolean isOpen = true;
     private Integer applicationLimit;
 
+    private String description;
+
+    @ElementCollection
+    private List<String> requirements;
+
+    @ElementCollection
+    private List<String> rules;
+
+    @ElementCollection(targetClass = UserRole.class)
+    @Enumerated(EnumType.STRING)
+    private List<UserRole> roles;
+
     private LocalDate startDate;
     private LocalDate endDate;
 
@@ -32,4 +48,7 @@ public class Cohort {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-}
+
+
+    }
+
