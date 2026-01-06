@@ -2,9 +2,11 @@ package com.igirerwanda.application_portal_backend.admin.controller;
 
 import com.igirerwanda.application_portal_backend.admin.dto.AdminCreateDto;
 import com.igirerwanda.application_portal_backend.admin.dto.AdminResponseDto;
-import com.igirerwanda.application_portal_backend.admin.dto.AdminActivityResponseDto;
-import com.igirerwanda.application_portal_backend.admin.dto.ApiResponse;
+import com.igirerwanda.application_portal_backend.admin.entity.AdminActivity;
+import com.igirerwanda.application_portal_backend.common.util.ApiResponse;
 import com.igirerwanda.application_portal_backend.admin.service.AdminService;
+import com.igirerwanda.application_portal_backend.auth.entity.Register;
+import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +18,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/api/admin-controller")
 public class AdminController {
     
     @Autowired
     private AdminService adminService;
+    
+    @Autowired
+    private RegisterRepository registerRepository;
 
     @Operation(summary = "Admin create User", description = "Admin create  User")
     @PostMapping("/admins_users")
@@ -30,23 +35,22 @@ public class AdminController {
         return new ResponseEntity<>(ApiResponse.success("User created successfully!", response), HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Get all activities", description = "Get all User")
+    @Operation(summary = "Get all activities", description = "Get all activities")
     @GetMapping("/activities")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ApiResponse<List<AdminActivityResponseDto>>> getUsersActivities() {
-        List<AdminActivityResponseDto> activities = adminService.getAdminActivities();
-        return ResponseEntity.ok(ApiResponse.success("Activities retrieved successfully!", activities));
+    public ResponseEntity<ApiResponse<List<AdminActivity>>> getUsersActivities() {
+        List<AdminActivity> activities = adminService.getAdminActivities();
+        return ResponseEntity.ok(new ApiResponse<>(true, "Activities retrieved successfully!", activities));
     }
     
 
     
-    // Admin CRUD Operations
-    @Operation(summary = "Get all Users", description = "Retrieve all admin users")
-    @GetMapping("/admins_users")
+    @Operation(summary = "Get all Users", description = "Retrieve all users including applicants")
+    @GetMapping("/getAllUsers")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ApiResponse<List<AdminResponseDto>>> getAllUsers() {
-        List<AdminResponseDto> admins = adminService.getAllAdmins();
-        return ResponseEntity.ok(ApiResponse.success("All users retrieved successfully!", admins));
+    public ResponseEntity<ApiResponse<List<Register>>> getAllUsers() {
+        List<Register> users = registerRepository.findAll();
+        return ResponseEntity.ok(new ApiResponse<>(true, "All users retrieved successfully!", users));
     }
 
     @Operation(summary = "Get User by Id", description = "Retrieve admin user by ID")
