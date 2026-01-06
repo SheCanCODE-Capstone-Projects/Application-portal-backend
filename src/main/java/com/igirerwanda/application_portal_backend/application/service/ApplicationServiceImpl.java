@@ -8,6 +8,7 @@ import com.igirerwanda.application_portal_backend.cohort.repository.CohortReposi
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
+import com.igirerwanda.application_portal_backend.notification.service.WebSocketService;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final CohortRepository cohortRepository;
     private final UserService userService;
     private final ApplicationValidationService validationService;
+    private final WebSocketService webSocketService;
 
     @Override
     public ApplicationDto createApplication(Long userId, ApplicationCreateDto dto) {
@@ -226,7 +228,12 @@ public class ApplicationServiceImpl implements ApplicationService {
         
         application = applicationRepository.save(application);
         
-        return mapToDto(application);
+        // Broadcast application submission
+        ApplicationDto applicationDto = mapToDto(application);
+        webSocketService.broadcastApplicationUpdate(applicationDto);
+        webSocketService.broadcastToAdmin("applications", applicationDto);
+        
+        return applicationDto;
     }
 
     @Override

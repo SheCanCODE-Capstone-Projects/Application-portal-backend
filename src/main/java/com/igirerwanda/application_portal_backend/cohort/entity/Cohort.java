@@ -13,10 +13,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "cohorts")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 public class Cohort {
 
@@ -51,6 +49,6 @@ public class Cohort {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    public void setDescription(@Size(max = 500, message = "Description max length is 500") String description) {
+
     }
-}
+

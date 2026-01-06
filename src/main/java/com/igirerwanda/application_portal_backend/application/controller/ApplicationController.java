@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/applications")
+@RequestMapping("/api/application-controller")
 @RequiredArgsConstructor
 public class ApplicationController {
 
@@ -54,7 +54,7 @@ public class ApplicationController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/my-applications")
+    @GetMapping("/getMyApplications")
     public ResponseEntity<List<ApplicationDto>> getMyApplications(Authentication auth) {
         Long userId = getUserIdFromAuth(auth);
         List<ApplicationDto> result = applicationService.getUserApplications(userId);

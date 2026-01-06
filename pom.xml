@@ -51,6 +51,12 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- WEBSOCKET -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
         <!-- POSTGRES -->
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -135,7 +141,6 @@
                 <configuration>
                     <source>21</source>
                     <target>21</target>
-                    <compilerArgs>--enable-preview</compilerArgs>
                 </configuration>
             </plugin>
         </plugins>

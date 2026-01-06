@@ -8,6 +8,7 @@ import com.igirerwanda.application_portal_backend.auth.repository.RegisterReposi
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
 import com.igirerwanda.application_portal_backend.notification.service.EmailService;
+import com.igirerwanda.application_portal_backend.notification.service.WebSocketService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,15 +23,18 @@ public class RegistrationService {
     private final EmailVerificationTokenRepository tokenRepo;
     private final PasswordEncoder encoder;
     private final EmailService emailService;
+    private final WebSocketService webSocketService;
 
     public RegistrationService(RegisterRepository registerRepo,
                                EmailVerificationTokenRepository tokenRepo,
                                PasswordEncoder encoder,
-                               EmailService emailService) {
+                               EmailService emailService,
+                               WebSocketService webSocketService) {
         this.registerRepo = registerRepo;
         this.tokenRepo = tokenRepo;
         this.encoder = encoder;
         this.emailService = emailService;
+        this.webSocketService = webSocketService;
     }
 
     public Map<String, String> register(RegisterRequest request) {
@@ -51,6 +55,9 @@ public class RegistrationService {
         user.setVerified(false);
 
         registerRepo.save(user);
+        
+        // Broadcast new user registration to admins
+        webSocketService.broadcastToAdmin("users", user);
 
         EmailVerificationToken token = new EmailVerificationToken();
         token.setToken(UUID.randomUUID().toString());
