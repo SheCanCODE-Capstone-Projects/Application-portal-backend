@@ -274,6 +274,42 @@ public class ApplicationServiceImpl implements ApplicationService {
         return validationService.isApplicationComplete(application);
     }
 
+    // Admin methods
+    @Override
+    public ApplicationDto updateApplicationStatus(Long applicationId, ApplicationStatus status) {
+        Application application = findApplicationById(applicationId);
+        application.setStatus(status);
+        application = applicationRepository.save(application);
+        return mapToDto(application);
+    }
+
+    @Override
+    public ApplicationDto scheduleInterview(Long applicationId, String interviewDetails) {
+        Application application = findApplicationById(applicationId);
+        application.setStatus(ApplicationStatus.INTERVIEW_SCHEDULED);
+        application = applicationRepository.save(application);
+        // TODO: Send interview notification
+        return mapToDto(application);
+    }
+
+    @Override
+    public ApplicationDto acceptApplication(Long applicationId) {
+        Application application = findApplicationById(applicationId);
+        application.setStatus(ApplicationStatus.ACCEPTED);
+        application = applicationRepository.save(application);
+        // TODO: Send acceptance notification
+        return mapToDto(application);
+    }
+
+    @Override
+    public ApplicationDto rejectApplication(Long applicationId) {
+        Application application = findApplicationById(applicationId);
+        application.setStatus(ApplicationStatus.REJECTED);
+        application = applicationRepository.save(application);
+        // TODO: Send rejection notification
+        return mapToDto(application);
+    }
+
     // Helper methods
     private Application findApplicationById(Long id) {
         return applicationRepository.findById(id)
@@ -300,37 +336,6 @@ public class ApplicationServiceImpl implements ApplicationService {
         dto.setSystemRejected(application.isSystemRejected());
         dto.setSubmittedAt(application.getSubmittedAt());
         dto.setCreatedAt(application.getCreatedAt());
-        
-        PersonalInformation personalInfo = application.getPersonalInformation();
-        if (personalInfo != null) {
-            dto.setPersonalInfo(mapPersonalInfoToDto(personalInfo));
-            
-            if (personalInfo.getEducationOccupation() != null) {
-                dto.setEducation(mapEducationToDto(personalInfo.getEducationOccupation()));
-            }
-            
-            if (personalInfo.getMotivationAnswer() != null) {
-                dto.setMotivation(mapMotivationToDto(personalInfo.getMotivationAnswer()));
-            }
-            
-            if (personalInfo.getDisabilityInformation() != null) {
-                dto.setDisability(mapDisabilityToDto(personalInfo.getDisabilityInformation()));
-            }
-            
-            if (personalInfo.getVulnerabilityInformation() != null) {
-                dto.setVulnerability(mapVulnerabilityToDto(personalInfo.getVulnerabilityInformation()));
-            }
-            
-            if (personalInfo.getDocuments() != null) {
-                dto.setDocuments(personalInfo.getDocuments().stream()
-                        .map(this::mapDocumentToDto).collect(Collectors.toList()));
-            }
-            
-            if (personalInfo.getEmergencyContacts() != null) {
-                dto.setEmergencyContacts(personalInfo.getEmergencyContacts().stream()
-                        .map(this::mapEmergencyContactToDto).collect(Collectors.toList()));
-            }
-        }
         
         return dto;
     }

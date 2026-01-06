@@ -10,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+
 @Entity
 @Table(name = "register")
 @Getter @Setter
@@ -52,6 +53,8 @@ public class Register {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+
 }
 
 
