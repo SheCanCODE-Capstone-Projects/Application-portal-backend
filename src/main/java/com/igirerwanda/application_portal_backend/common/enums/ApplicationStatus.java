@@ -1,9 +1,11 @@
 package com.igirerwanda.application_portal_backend.common.enums;
 
 public enum ApplicationStatus {
-    PENDING,
+    DRAFT,
+    SUBMITTED,
+    PENDING_REVIEW,
     UNDER_REVIEW,
-    APPROVED,
     REJECTED,
-    SYSTEM_REJECTED
+    SYSTEM_REJECTED,
+    APPROVED
 }

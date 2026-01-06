@@ -1,36 +1,25 @@
 package com.igirerwanda.application_portal_backend.application.service;
 
-import com.igirerwanda.application_portal_backend.application.entity.Application;
-import com.igirerwanda.application_portal_backend.application.repository.ApplicationRepository;
+import com.igirerwanda.application_portal_backend.application.dto.*;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Service
-public class ApplicationService {
-
-    private final ApplicationRepository applicationRepository;
-    private final SystemRejectionService systemRejectionService;
-
-    public ApplicationService(ApplicationRepository applicationRepository, SystemRejectionService systemRejectionService) {
-        this.applicationRepository = applicationRepository;
-        this.systemRejectionService = systemRejectionService;
-    }
-
-    @Transactional
-    public Application submitApplication(Application application) {
-        Application savedApplication = applicationRepository.save(application);
-        systemRejectionService.evaluateAndRejectIfNeeded(savedApplication);
-        return savedApplication;
-    }
-
-    public List<Application> getAllApplications() {
-        return applicationRepository.findAll();
-    }
-
-    public List<Application> getApplicationsByStatus(ApplicationStatus status) {
-        return applicationRepository.findByStatus(status);
-    }
+public interface ApplicationService {
+    ApplicationDto createApplication(Long userId, ApplicationCreateDto dto);
+    ApplicationDto submitCompleteApplication(Long userId, ApplicationSubmissionDto dto);
+    ApplicationDto updatePersonalInfo(Long applicationId, PersonalInfoDto dto);
+    ApplicationDto updateEducation(Long applicationId, EducationDto dto);
+    ApplicationDto updateMotivation(Long applicationId, MotivationDto dto);
+    ApplicationDto addDocument(Long applicationId, DocumentDto dto);
+    ApplicationDto addEmergencyContact(Long applicationId, EmergencyContactDto dto);
+    ApplicationDto updateDisability(Long applicationId, DisabilityDto dto);
+    ApplicationDto updateVulnerability(Long applicationId, VulnerabilityDto dto);
+    ApplicationDto submitApplication(Long applicationId);
+    ApplicationDto getApplication(Long applicationId);
+    List<ApplicationDto> getUserApplications(Long userId);
+    List<ApplicationDto> getApplicationsByStatus(ApplicationStatus status);
+    boolean isApplicationComplete(Long applicationId);
+    void deleteDocument(Long documentId);
+    void deleteEmergencyContact(Long contactId);
 }
