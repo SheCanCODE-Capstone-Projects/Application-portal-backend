@@ -6,6 +6,7 @@ import com.igirerwanda.application_portal_backend.application.service.AdminAppli
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/admin/applications")
 @RequiredArgsConstructor
-// @PreAuthorize("hasRole('ADMIN')") // Ensure you enable security here
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminApplicationController {
 
     private final AdminApplicationService adminService;

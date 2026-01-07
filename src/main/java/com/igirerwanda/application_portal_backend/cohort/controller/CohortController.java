@@ -19,7 +19,6 @@ public class CohortController {
     private final CohortService service;
     private final SimpMessagingTemplate messagingTemplate;
 
-    // ✅ CHANGED: Uses hasRole('ADMIN') to match UserController
     @PostMapping("/admin/cohorts")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
@@ -51,7 +50,7 @@ public class CohortController {
         return service.getAllCohorts();
     }
 
-    // --- Public Endpoints (No Admin Role Required) ---
+    //  Public Endpoints (No Admin Role Required)
 
     @GetMapping("/cohorts/frontend")
     public List<CohortDto> getCohortsForFrontend() {

@@ -32,6 +32,7 @@ public class Cohort {
     @Column(name = "application_limit", nullable = true)
     private Integer applicationLimit;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @ElementCollection

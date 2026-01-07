@@ -18,10 +18,11 @@ public class CohortMapper {
                 .year(dto.getYear())
                 .applicationLimit(dto.getApplicationLimit())
                 .isOpen(dto.getIsOpen() != null ? dto.getIsOpen() : true)
-                // ✅ Fix: Convert List from JSON to Set for Database
                 .rules(dto.getRules() != null ? new HashSet<>(dto.getRules()) : new HashSet<>())
                 .roles(dto.getRoles() != null ? new HashSet<>(dto.getRoles()) : new HashSet<>())
                 .requirements(dto.getRequirements() != null ? new HashSet<>(dto.getRequirements()) : new HashSet<>())
+                .startDate(dto.getStartDate())
+                .endDate(dto.getEndDate())
                 .build();
     }
 
@@ -32,13 +33,14 @@ public class CohortMapper {
         dto.setDescription(entity.getDescription());
         dto.setYear(entity.getYear());
 
-        // ✅ Fix: Convert Set from Database to List for JSON
         dto.setRules(entity.getRules() != null ? new ArrayList<>(entity.getRules()) : new ArrayList<>());
         dto.setRequirements(entity.getRequirements() != null ? new ArrayList<>(entity.getRequirements()) : new ArrayList<>());
         dto.setRoles(entity.getRoles() != null ? new ArrayList<>(entity.getRoles()) : new ArrayList<>());
 
         dto.setIsOpen(entity.getIsOpen());
         dto.setApplicationLimit(entity.getApplicationLimit());
+        dto.setStartDate(entity.getStartDate());
+        dto.setEndDate(entity.getEndDate());
 
         return dto;
     }

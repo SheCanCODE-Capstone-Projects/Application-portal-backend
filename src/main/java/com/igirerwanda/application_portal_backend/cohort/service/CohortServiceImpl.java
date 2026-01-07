@@ -42,12 +42,12 @@ public class CohortServiceImpl implements CohortService {
         if (dto.getName() != null) cohort.setName(dto.getName());
         if (dto.getDescription() != null) cohort.setDescription(dto.getDescription());
 
-        // ✅ FIX: Convert List to Set for Requirements
         if (dto.getRequirements() != null) {
             cohort.setRequirements(new HashSet<>(dto.getRequirements()));
         }
 
-        // ✅ FIX: Convert List to Set for Rules
+
+
         if (dto.getRules() != null) {
             cohort.setRules(new HashSet<>(dto.getRules()));
         }
