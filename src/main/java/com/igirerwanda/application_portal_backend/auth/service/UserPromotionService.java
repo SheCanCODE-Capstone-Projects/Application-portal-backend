@@ -1,30 +1,21 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
-import com.igirerwanda.application_portal_backend.application.entity.Application;
-import com.igirerwanda.application_portal_backend.application.repository.ApplicationRepository;
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
-import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
-import com.igirerwanda.application_portal_backend.cohort.repository.CohortRepository;
-import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.common.enums.UserStatus;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // Import this
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class UserPromotionService {
 
     private final UserRepository userRepo;
 
-    public UserPromotionService(UserRepository userRepo) {
-        this.userRepo = userRepo;
-
-    }
-
     @Transactional
     public User promote(Register register) {
-
         if (register.getUser() != null) {
             return register.getUser();
         }
@@ -32,6 +23,11 @@ public class UserPromotionService {
         User user = new User();
         user.setRegister(register);
         user.setStatus(UserStatus.ACTIVE);
-        return userRepo.save(user);
+        user = userRepo.save(user);
+
+        // Link back to register entity
+        register.setUser(user);
+
+        return user;
     }
 }
