@@ -3,7 +3,6 @@ package com.igirerwanda.application_portal_backend.application.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igirerwanda.application_portal_backend.application.dto.ApplicationCreateDto;
 import com.igirerwanda.application_portal_backend.application.dto.ApplicationDto;
-import com.igirerwanda.application_portal_backend.application.service.ApplicationService;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

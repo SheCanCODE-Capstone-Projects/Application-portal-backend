@@ -13,4 +13,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // FIX: This allows looking up User via Register's email field
     Optional<User> findByRegisterEmail(String email);
+    Optional<User> findByRegisterId(Long registerId);
 }

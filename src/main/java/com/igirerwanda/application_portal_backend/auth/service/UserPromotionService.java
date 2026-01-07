@@ -16,49 +16,22 @@ import org.springframework.transaction.annotation.Transactional; // Import this
 public class UserPromotionService {
 
     private final UserRepository userRepo;
-    private final CohortRepository cohortRepo;
-    private final ApplicationRepository applicationRepo;
 
-    public UserPromotionService(UserRepository userRepo,
-                                CohortRepository cohortRepo,
-                                ApplicationRepository applicationRepo) {
+    public UserPromotionService(UserRepository userRepo) {
         this.userRepo = userRepo;
-        this.cohortRepo = cohortRepo;
-        this.applicationRepo = applicationRepo;
+
     }
 
-    @Transactional // Added to ensure database consistency
+    @Transactional
     public User promote(Register register) {
 
         if (register.getUser() != null) {
             return register.getUser();
         }
 
-        // FIX: Use .orElse(null) instead of throwing an exception
-        Cohort cohort = cohortRepo.findFirstByIsOpenTrue()
-                .orElse(null);
-
         User user = new User();
         user.setRegister(register);
-        user.setCohort(cohort); // Will be null if no open cohort exists
         user.setStatus(UserStatus.ACTIVE);
-
-        user = userRepo.save(user);
-
-        register.setUser(user);
-
-        Application application = new Application();
-        application.setUser(user);
-
-        // IMPORTANT: If your Application entity requires a Cohort,
-        // you should set it here as well.
-        if (cohort != null) {
-            application.setCohort(cohort);
-        }
-
-        application.setStatus(ApplicationStatus.PENDING);
-        applicationRepo.save(application);
-
-        return user;
+        return userRepo.save(user);
     }
 }

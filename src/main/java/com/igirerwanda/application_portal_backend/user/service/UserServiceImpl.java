@@ -2,6 +2,7 @@ package com.igirerwanda.application_portal_backend.user.service;
 
 import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import com.igirerwanda.application_portal_backend.cohort.repository.CohortRepository;
+import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
 import com.igirerwanda.application_portal_backend.user.dto.UserResponseDto;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 // import com.igirerwanda.application_portal_backend.user.mapper.UserMapper; // <--- REMOVE THIS IMPORT
@@ -36,6 +37,13 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
 
+
+    @Override
+    public User findByRegisterId(Long registerId) {
+        return userRepository.findByRegisterId(registerId)
+                .orElseThrow(() -> new NotFoundException("User profile not found for Account ID: " + registerId));
+    }
+
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -60,6 +68,10 @@ public class UserServiceImpl implements UserService {
 
         Cohort cohort = cohortRepository.findById(cohortId)
                 .orElseThrow(() -> new RuntimeException("Cohort not found"));
+
+        if (!Boolean.TRUE.equals(cohort.getIsOpen())) {
+            throw new IllegalStateException("Cohort is closed");
+        }
 
         user.setCohort(cohort);
         userRepository.save(user);

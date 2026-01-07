@@ -6,7 +6,8 @@ import java.util.List;
 
 public interface UserService {
     List<User> getAllUsers();
-    User findById(Long id); // <--- ADD THIS LINE
+    User findById(Long id);
+    User findByRegisterId(Long registerId);
     User softDelete(Long id);
     User archive(Long id);
 
