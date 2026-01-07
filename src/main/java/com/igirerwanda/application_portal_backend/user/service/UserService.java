@@ -1,12 +1,15 @@
 package com.igirerwanda.application_portal_backend.user.service;
 
+import com.igirerwanda.application_portal_backend.user.dto.UserResponseDto;
 import com.igirerwanda.application_portal_backend.user.entity.User;
-import com.igirerwanda.application_portal_backend.user.dto.UserDto;
+import java.util.List;
 
 public interface UserService {
-    User findById(Long id);
-    User createUser(UserDto userDto);
-    User updateUser(Long id, UserDto userDto);
-    void deleteUser(Long id);
-    boolean existsById(Long id);
+    List<User> getAllUsers();
+    User findById(Long id); // <--- ADD THIS LINE
+    User softDelete(Long id);
+    User archive(Long id);
+
+    UserResponseDto getCurrentUserProfile();
+    void applyToCohort(Long cohortId);
 }

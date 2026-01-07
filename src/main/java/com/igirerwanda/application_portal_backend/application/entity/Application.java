@@ -32,7 +32,7 @@ public class Application {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cohort_id", nullable = false)
+    @JoinColumn(name = "cohort_id", nullable = true)
     private Cohort cohort;
 
     @Enumerated(EnumType.STRING)
@@ -47,6 +47,8 @@ public class Application {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    private String systemRejectionReason;
 
     // Relationship: One application → One personal_information
     @OneToOne(mappedBy = "application", cascade = CascadeType.ALL)

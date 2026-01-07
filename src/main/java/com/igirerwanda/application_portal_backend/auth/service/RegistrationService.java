@@ -9,6 +9,8 @@ import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
 import com.igirerwanda.application_portal_backend.notification.service.EmailService;
 import com.igirerwanda.application_portal_backend.notification.service.WebSocketService;
+import com.igirerwanda.application_portal_backend.user.entity.User;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,17 +26,19 @@ public class RegistrationService {
     private final PasswordEncoder encoder;
     private final EmailService emailService;
     private final WebSocketService webSocketService;
+    private final UserPromotionService userPromotionService;
 
     public RegistrationService(RegisterRepository registerRepo,
                                EmailVerificationTokenRepository tokenRepo,
                                PasswordEncoder encoder,
                                EmailService emailService,
-                               WebSocketService webSocketService) {
+                               WebSocketService webSocketService, UserPromotionService userPromotionService) {
         this.registerRepo = registerRepo;
         this.tokenRepo = tokenRepo;
         this.encoder = encoder;
         this.emailService = emailService;
         this.webSocketService = webSocketService;
+        this.userPromotionService = userPromotionService;
     }
 
     public Map<String, String> register(RegisterRequest request) {
@@ -74,6 +78,22 @@ public class RegistrationService {
         );
 
         return Map.of("message", "Verification email sent");
+
     }
+
+    @Transactional
+    public User verifyEmail(String tokenStr) {
+        EmailVerificationToken token = tokenRepo.findByToken(tokenStr)
+                .orElseThrow(() -> new RuntimeException("Invalid token"));
+
+        Register register = token.getRegister();
+        register.setVerified(true);
+        registerRepo.save(register);
+
+        User user = userPromotionService.promote(register);
+
+        return user;
+    }
+
 }
 

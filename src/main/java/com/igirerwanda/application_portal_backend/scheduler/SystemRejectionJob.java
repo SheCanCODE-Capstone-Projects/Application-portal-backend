@@ -22,7 +22,7 @@ public class SystemRejectionJob {
 
     @Scheduled(fixedRate = 300000) // Run every 5 minutes
     public void evaluatePendingApplications() {
-        List<Application> pendingApplications = applicationRepository.findByStatus(ApplicationStatus.PENDING);
+        List<Application> pendingApplications = applicationRepository.findByStatus(ApplicationStatus.PENDING_REVIEW);
         
         for (Application application : pendingApplications) {
             systemRejectionService.evaluateAndRejectIfNeeded(application);

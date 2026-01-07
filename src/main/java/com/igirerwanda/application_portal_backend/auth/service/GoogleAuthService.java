@@ -12,13 +12,14 @@ public class GoogleAuthService {
 
     private final RegisterRepository registerRepository;
     private final JwtService jwtService;
+    private final UserPromotionService userPromotionService;
 
     public GoogleAuthService(RegisterRepository registerRepository,
                              JwtService jwtService,
-                             UserPromotionService userPromotionService, UserPromotionService userPromotionService1) {
+                             UserPromotionService userPromotionService) {
         this.registerRepository = registerRepository;
         this.jwtService = jwtService;
-
+        this.userPromotionService = userPromotionService;
     }
 
     public String handleGoogleLogin(String email, String googleId, String name) {
@@ -48,8 +49,6 @@ public class GoogleAuthService {
                     newUser.setRole(UserRole.APPLICANT);
                     return registerRepository.save(newUser);
                 });
-
-        UserPromotionService userPromotionService = null;
         userPromotionService.promote(user);
 
         return jwtService.generateAccessToken(user);

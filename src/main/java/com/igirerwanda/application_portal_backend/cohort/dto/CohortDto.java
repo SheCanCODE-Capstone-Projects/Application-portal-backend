@@ -13,4 +13,7 @@ public class CohortDto {
     private List<String> requirements;
     private List<String> rules;
     private List<UserRole> roles;
+    private Boolean isOpen;
+    private Integer applicationLimit;
+    private Integer year;
 }

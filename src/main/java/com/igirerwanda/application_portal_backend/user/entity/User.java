@@ -30,13 +30,23 @@ public class User {
     @JoinColumn(name = "register_id", nullable = false)
     private Register register;
 
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cohort_id", nullable = false)
+    @JoinColumn(name = "cohort_id", nullable = true)
     private Cohort cohort;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserStatus status = UserStatus.PENDING_VERIFICATION;
+
+
+    public void softDelete() {
+        this.status = UserStatus.DISABLED;
+    }
+
+    public void archive() {
+        this.status = UserStatus.ARCHIVED;
+    }
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -62,12 +72,4 @@ public class User {
         return this.register.getUsername();
     }
 
-    // UserStatus as String
-    public void setStatus(String status) {
-        this.status = UserStatus.valueOf(status);
-    }
-
-    public String getStatus() {
-        return this.status.toString();
-    }
 }

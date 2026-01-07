@@ -1,42 +1,65 @@
 package com.igirerwanda.application_portal_backend.cohort.service;
 
 import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
-import com.igirerwanda.application_portal_backend.cohort.dto.CohortCreateDto;
-import com.igirerwanda.application_portal_backend.cohort.dto.CohortDto;
-import com.igirerwanda.application_portal_backend.cohort.dto.CohortUpdateDto;
+import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
+import com.igirerwanda.application_portal_backend.cohort.dto.*;
 import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import com.igirerwanda.application_portal_backend.cohort.mapper.CohortMapper;
 import com.igirerwanda.application_portal_backend.cohort.repository.CohortRepository;
-import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
+import com.igirerwanda.application_portal_backend.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet; // ✅ Import HashSet
 import java.util.List;
 import java.util.stream.Collectors;
-
-
 
 @Service
 @RequiredArgsConstructor
 public class CohortServiceImpl implements CohortService {
 
     private final CohortRepository repository;
-
-    public CohortServiceImpl(CohortRepository repository) {
-        this.repository = repository;
-    }
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
     public CohortDto createCohort(CohortCreateDto dto) {
         repository.findByName(dto.getName()).ifPresent(c -> {
-            throw new DuplicateResourceException("Cohort already exists");
+            throw new DuplicateResourceException("Cohort already exists with name: " + dto.getName());
         });
+
         Cohort cohort = CohortMapper.toEntity(dto);
         return CohortMapper.toDto(repository.save(cohort));
     }
 
     @Override
+    @Transactional
+    public CohortDto updateCohort(Long id, CohortUpdateDto dto) {
+        Cohort cohort = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Cohort not found with id: " + id));
+
+        if (dto.getName() != null) cohort.setName(dto.getName());
+        if (dto.getDescription() != null) cohort.setDescription(dto.getDescription());
+
+        // ✅ FIX: Convert List to Set for Requirements
+        if (dto.getRequirements() != null) {
+            cohort.setRequirements(new HashSet<>(dto.getRequirements()));
+        }
+
+        // ✅ FIX: Convert List to Set for Rules
+        if (dto.getRules() != null) {
+            cohort.setRules(new HashSet<>(dto.getRules()));
+        }
+
+        if (dto.getIsOpen() != null) cohort.setIsOpen(dto.getIsOpen());
+        if (dto.getApplicationLimit() != null) cohort.setApplicationLimit(dto.getApplicationLimit());
+
+        return CohortMapper.toDto(repository.save(cohort));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<CohortDto> getAllCohorts() {
         return repository.findAll().stream()
                 .map(CohortMapper::toDto)
@@ -44,50 +67,28 @@ public class CohortServiceImpl implements CohortService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CohortDto> getCohortsForFrontend() {
+        // Only return cohorts marked as open
         return repository.findAll().stream()
-                .map(cohort -> {
-                    CohortDto dto = new CohortDto();
-                    dto.setId(cohort.getId());
-                    dto.setName(cohort.getName());
-                    return dto;
-                })
+                .filter(Cohort::getIsOpen)
+                .map(CohortMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CohortDto getCohortById(Long id) {
-
-        Cohort cohort = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cohort not found with id: " + id));
-        return CohortMapper.toDto(cohort);
-    }
-
-    @Override
-    @Transactional
-    public CohortDto updateCohort(Long id, CohortUpdateDto dto) {
-        Cohort cohort = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cohort not found with id: " + id));
-        
-        if (dto.getName() != null && !dto.getName().equals(cohort.getName())) {
-            repository.findByName(dto.getName()).ifPresent(c -> {
-                throw new DuplicateResourceException("Cohort name already exists");
-            });
-            cohort.setName(dto.getName());
-        }
-        
-        if (dto.getDescription() != null) {
-            cohort.setDomain(dto.getDescription());
-        }
-        
-        return CohortMapper.toDto(repository.save(cohort));
+        return repository.findById(id)
+                .map(CohortMapper::toDto)
+                .orElseThrow(() -> new NotFoundException("Cohort not found with id: " + id));
     }
 
     @Override
     @Transactional
     public void deleteCohort(Long id) {
         if (!repository.existsById(id)) {
-            throw new RuntimeException("Cohort not found with id: " + id);
+            throw new NotFoundException("Cohort not found with id: " + id);
         }
         repository.deleteById(id);
     }
