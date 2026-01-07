@@ -2,6 +2,7 @@ package com.igirerwanda.application_portal_backend.auth.service;
 
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
 import com.igirerwanda.application_portal_backend.common.enums.UserStatus;
+import com.igirerwanda.application_portal_backend.notification.service.NotificationService;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserPromotionService {
 
     private final UserRepository userRepo;
+    private final NotificationService notificationService;
 
     @Transactional
     public User promote(Register register) {
@@ -25,8 +27,9 @@ public class UserPromotionService {
         user.setStatus(UserStatus.ACTIVE);
         user = userRepo.save(user);
 
-        // Link back to register entity
         register.setUser(user);
+
+        notificationService.sendAccountActivatedNotification(user);
 
         return user;
     }
