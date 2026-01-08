@@ -10,9 +10,9 @@ import java.util.Optional;
 
 @Repository
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
-    List<Application> findByUserId(Long userId);
+    Optional<Application> findByUserId(Long userId);
     List<Application> findByStatus(ApplicationStatus status);
 
-    // Crucial for the new "Auto-Start" logic
     Optional<Application> findByUserIdAndCohortId(Long userId, Long cohortId);
+
 }

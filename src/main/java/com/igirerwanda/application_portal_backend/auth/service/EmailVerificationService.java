@@ -42,16 +42,15 @@ public class EmailVerificationService {
 
         if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
             tokenRepo.delete(token);
-            throw new ValidationException("Verification token has expired");
+            throw new ValidationException("Token has expired");
         }
-
         Register register = token.getRegister();
 
         if (!register.isVerified()) {
             register.setVerified(true);
             registerRepo.save(register);
 
-            // Promote only AFTER successful verification
+
             userPromotionService.promote(register);
         }
 

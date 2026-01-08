@@ -39,7 +39,7 @@ public class UserApplicationController {
         Long userId = jwtUtil.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(
                 "Application retrieved",
-                userApplicationService.startApplicationForUser(userId)
+                userApplicationService.getApplicationForUser(userId)
         ));
     }
 
@@ -116,9 +116,11 @@ public class UserApplicationController {
 
     @GetMapping("/{id}/progress")
     public ResponseEntity<ApiResponse<Map<String, Double>>> getProgress(@PathVariable Long id) {
+
+        Long userId = jwtUtil.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(
                 "Progress calculated",
-                Map.of("percentage", userApplicationService.calculateCompletionPercentage(id))
+                Map.of("percentage", userApplicationService.calculateCompletionPercentage(id, userId))
         ));
     }
 }

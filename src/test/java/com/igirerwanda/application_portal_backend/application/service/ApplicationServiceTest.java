@@ -3,6 +3,7 @@ package com.igirerwanda.application_portal_backend.application.service;
 import com.igirerwanda.application_portal_backend.application.dto.ApplicationCreateDto;
 import com.igirerwanda.application_portal_backend.application.dto.ApplicationDto;
 import com.igirerwanda.application_portal_backend.application.entity.Application;
+import com.igirerwanda.application_portal_backend.application.repository.ApplicationRepository;
 import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import com.igirerwanda.application_portal_backend.cohort.repository.CohortRepository;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;

@@ -5,6 +5,7 @@ import com.igirerwanda.application_portal_backend.application.entity.Application
 import com.igirerwanda.application_portal_backend.application.repository.ApplicationRepository;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
+import com.igirerwanda.application_portal_backend.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class AdminApplicationServiceImpl implements AdminApplicationService {
 
     private final ApplicationRepository applicationRepository;
+    private final NotificationService notificationService;
 
     @Override
     public List<ApplicationDto> getApplicationsByStatus(ApplicationStatus status) {
@@ -37,25 +39,48 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
     public ApplicationDto updateStatus(Long applicationId, ApplicationStatus status) {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new NotFoundException("Application not found"));
+
         app.setStatus(status);
-        return mapToDto(applicationRepository.save(app));
+        Application savedApp = applicationRepository.save(app);
+
+        // Notify user based on new status
+        if (status == ApplicationStatus.ACCEPTED) {
+            notificationService.sendApplicationAcceptedNotification(savedApp);
+        } else if (status == ApplicationStatus.REJECTED) {
+            notificationService.sendApplicationRejectedNotification(savedApp);
+        } else if (status == ApplicationStatus.UNDER_REVIEW) {
+            notificationService.sendApplicationUnderReviewNotification(savedApp);
+        }
+
+        return mapToDto(savedApp);
     }
 
     @Override
     public ApplicationDto scheduleInterview(Long applicationId, String details) {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new NotFoundException("Application not found"));
+
         app.setStatus(ApplicationStatus.INTERVIEW_SCHEDULED);
-        // Logic to save interview details to a table or email would go here
-        return mapToDto(applicationRepository.save(app));
+        Application savedApp = applicationRepository.save(app);
+
+
+        notificationService.sendInterviewScheduledNotification(savedApp, details);
+
+        return mapToDto(savedApp);
     }
 
     private ApplicationDto mapToDto(Application app) {
-        // Reuse mapping logic (User/Admin share DTO structure)
         ApplicationDto dto = new ApplicationDto();
         dto.setId(app.getId());
         dto.setUserId(app.getUser().getId());
         dto.setStatus(app.getStatus());
+
+        // Null safe cohort mapping
+        if (app.getCohort() != null) {
+            dto.setCohortId(app.getCohort().getId());
+            dto.setCohortName(app.getCohort().getName());
+        }
+
         return dto;
     }
 }

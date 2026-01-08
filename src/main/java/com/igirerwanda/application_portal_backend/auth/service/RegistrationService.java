@@ -7,6 +7,7 @@ import com.igirerwanda.application_portal_backend.auth.repository.EmailVerificat
 import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
+import com.igirerwanda.application_portal_backend.common.exception.ValidationException;
 import com.igirerwanda.application_portal_backend.notification.service.EmailService;
 import com.igirerwanda.application_portal_backend.notification.service.WebSocketService;
 import com.igirerwanda.application_portal_backend.user.entity.User;
@@ -59,8 +60,7 @@ public class RegistrationService {
         user.setVerified(false);
 
         registerRepo.save(user);
-        
-        // Broadcast new user registration to admins
+
         webSocketService.broadcastToAdmin("users", user);
 
         EmailVerificationToken token = new EmailVerificationToken();
@@ -84,7 +84,13 @@ public class RegistrationService {
     @Transactional
     public User verifyEmail(String tokenStr) {
         EmailVerificationToken token = tokenRepo.findByToken(tokenStr)
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+                .orElseThrow(() -> new ValidationException("Invalid or expired verification token"));
+
+        // SECURITY FIX: Check if token is expired
+        if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
+            tokenRepo.delete(token);
+            throw new ValidationException("Verification token has expired");
+        }
 
         Register register = token.getRegister();
         register.setVerified(true);
@@ -92,8 +98,10 @@ public class RegistrationService {
 
         User user = userPromotionService.promote(register);
 
+
+        tokenRepo.delete(token);
+
         return user;
     }
 
 }
-

@@ -1,6 +1,7 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
+import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
 import com.igirerwanda.application_portal_backend.common.enums.UserStatus;
 import com.igirerwanda.application_portal_backend.notification.service.NotificationService;
 import com.igirerwanda.application_portal_backend.user.entity.User;
@@ -15,6 +16,7 @@ public class UserPromotionService {
 
     private final UserRepository userRepo;
     private final NotificationService notificationService;
+    private final RegisterRepository registerRepo;
 
     @Transactional
     public User promote(Register register) {
@@ -26,8 +28,7 @@ public class UserPromotionService {
         user.setRegister(register);
         user.setStatus(UserStatus.ACTIVE);
         user = userRepo.save(user);
-
-        register.setUser(user);
+        registerRepo.save(register);
 
         notificationService.sendAccountActivatedNotification(user);
 

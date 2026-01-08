@@ -32,7 +32,7 @@ public class Application {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cohort_id", nullable = true)
+    @JoinColumn(name = "cohort_id", nullable = false)
     private Cohort cohort;
 
     @Enumerated(EnumType.STRING)

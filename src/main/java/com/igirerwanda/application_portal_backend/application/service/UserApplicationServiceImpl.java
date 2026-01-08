@@ -6,15 +6,16 @@ import com.igirerwanda.application_portal_backend.application.repository.*;
 import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
+import com.igirerwanda.application_portal_backend.common.exception.ResourceNotFoundException;
 import com.igirerwanda.application_portal_backend.common.exception.ValidationException;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException; // Required import
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,9 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     private final VulnerabilityInformationRepository vulnerabilityRepository;
     private final DocumentRepository documentRepository;
     private final EmergencyContactRepository emergencyContactRepository;
+
+    // Injected validation service
+    private final ApplicationValidationService applicationValidationService;
 
     @Override
     public ApplicationDto startApplicationForUser(Long registerId) {
@@ -110,7 +114,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         d.setPersonalInformation(pi);
         d.setHasDisability(dto.getHasDisability());
         d.setDisabilityType(dto.getDisabilityType());
-        d.setDisabilityDescription(dto.getDisabilityDescription());
+        d.setDisabilityDescription(d.getDisabilityDescription());
 
         disabilityRepository.save(d);
         return mapToDto(application);
@@ -131,17 +135,14 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         return mapToDto(application);
     }
 
-    // ✅ IMPLEMENTED: Save Documents
     @Override
     public ApplicationDto saveDocuments(Long appId, Long registerId, List<DocumentDto> dtos) {
         Application application = getOwnedApplication(appId, registerId);
         PersonalInformation pi = ensurePersonalInfo(application);
 
-        // 1. Clear existing to prevent duplicates/orphans
         documentRepository.deleteByPersonalInformation(pi);
-        documentRepository.flush(); // Force delete
+        documentRepository.flush();
 
-        // 2. Map new ones
         List<Document> documents = dtos.stream().map(dto -> {
             Document doc = new Document();
             doc.setPersonalInformation(pi);
@@ -150,24 +151,18 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             return doc;
         }).collect(Collectors.toList());
 
-        // 3. Save
         documentRepository.saveAll(documents);
-
-        // Refresh to get updated list for return
         return mapToDto(application);
     }
 
-    // ✅ IMPLEMENTED: Save Emergency Contacts
     @Override
     public ApplicationDto saveEmergencyContacts(Long appId, Long registerId, List<EmergencyContactDto> dtos) {
         Application application = getOwnedApplication(appId, registerId);
         PersonalInformation pi = ensurePersonalInfo(application);
 
-        // 1. Clear existing
         emergencyContactRepository.deleteByPersonalInformation(pi);
         emergencyContactRepository.flush();
 
-        // 2. Map new ones
         List<EmergencyContact> contacts = dtos.stream().map(dto -> {
             EmergencyContact contact = new EmergencyContact();
             contact.setPersonalInformation(pi);
@@ -177,9 +172,15 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             return contact;
         }).collect(Collectors.toList());
 
-        // 3. Save
         emergencyContactRepository.saveAll(contacts);
+        return mapToDto(application);
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ApplicationDto getApplicationForUser(Long userId) {
+        Application application = applicationRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("No application found for user with ID: " + userId));
         return mapToDto(application);
     }
 
@@ -187,52 +188,53 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     public ApplicationDto submitApplication(Long appId, Long registerId) {
         Application app = getOwnedApplication(appId, registerId);
 
-        if (app.getPersonalInformation() == null) {
-            throw new ValidationException("Please complete your personal information before submitting.");
-        }
-
-        // Ensure strictly necessary fields are present here if needed
+        // Validated submission logic
+        applicationValidationService.validateForSubmission(app);
 
         app.setStatus(ApplicationStatus.SUBMITTED);
         app.setSubmittedAt(LocalDateTime.now());
         return mapToDto(applicationRepository.save(app));
     }
 
+    // FIX: Method signature now matches interface (includes userId)
     @Override
-    public double calculateCompletionPercentage(Long applicationId) {
+    public double calculateCompletionPercentage(Long applicationId, Long userId) {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new NotFoundException("Application not found"));
 
+        // SECURITY CHECK: Ensure user owns the application
+        if (!app.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("Access denied: You do not own this application.");
+        }
+
         int score = 0;
-        int totalSections = 7; // Increased for docs + contacts
+        int totalSections = 7;
 
         PersonalInformation pi = app.getPersonalInformation();
         if (pi != null) {
-            score++; // 1. Personal Info
-            if (pi.getEducationOccupation() != null) score++; // 2. Education
-            if (pi.getMotivationAnswer() != null) score++; // 3. Motivation
-            if (pi.getDisabilityInformation() != null) score++; // 4. Disability
-            if (pi.getVulnerabilityInformation() != null) score++; // 5. Vulnerability
+            score++;
+            if (pi.getEducationOccupation() != null) score++;
+            if (pi.getMotivationAnswer() != null) score++;
+            if (pi.getDisabilityInformation() != null) score++;
+            if (pi.getVulnerabilityInformation() != null) score++;
 
-            // Check lists safely
             List<Document> docs = documentRepository.findByPersonalInformation(pi);
-            if (docs != null && !docs.isEmpty()) score++; // 6. Documents
+            if (docs != null && !docs.isEmpty()) score++;
 
             List<EmergencyContact> contacts = emergencyContactRepository.findByPersonalInformation(pi);
-            if (contacts != null && !contacts.isEmpty()) score++; // 7. Contacts
+            if (contacts != null && !contacts.isEmpty()) score++;
         }
 
         return ((double) score / totalSections) * 100;
     }
 
-    // --- Helpers ---
-
     private Application getOwnedApplication(Long appId, Long registerId) {
         Application app = applicationRepository.findById(appId)
                 .orElseThrow(() -> new NotFoundException("Application not found"));
 
+        // Security Fix: Use AccessDeniedException
         if (!app.getUser().getRegister().getId().equals(registerId)) {
-            throw new SecurityException("Access denied: You do not own this application.");
+            throw new AccessDeniedException("Access denied: You do not own this application.");
         }
         return app;
     }
@@ -241,6 +243,8 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         if (app.getPersonalInformation() == null) {
             PersonalInformation pi = new PersonalInformation();
             pi.setApplication(app);
+            // FIX: Set bidirectional relationship to ensure persistence
+            app.setPersonalInformation(pi);
             return personalInfoRepository.save(pi);
         }
         return app.getPersonalInformation();
@@ -251,20 +255,23 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         return (value != null) ? value : constructor.get();
     }
 
-    // --- COMPLETE MAPPER ---
     private ApplicationDto mapToDto(Application app) {
         ApplicationDto dto = new ApplicationDto();
         dto.setId(app.getId());
         dto.setUserId(app.getUser().getId());
         dto.setStatus(app.getStatus());
-        dto.setCohortId(app.getCohort().getId());
-        dto.setCohortName(app.getCohort().getName());
+
+        // Fix: Null safe check for cohort
+        if (app.getCohort() != null) {
+            dto.setCohortId(app.getCohort().getId());
+            dto.setCohortName(app.getCohort().getName());
+        }
+
         dto.setSubmittedAt(app.getSubmittedAt());
         dto.setCreatedAt(app.getCreatedAt());
 
         PersonalInformation pi = app.getPersonalInformation();
         if (pi != null) {
-            // Map Personal Info
             PersonalInfoDto piDto = new PersonalInfoDto();
             piDto.setFullName(pi.getFullName());
             piDto.setEmail(pi.getEmail());
@@ -274,7 +281,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             piDto.setAdditionalInformation(pi.getAdditionalInformation());
             dto.setPersonalInfo(piDto);
 
-            // Map Education
             if (pi.getEducationOccupation() != null) {
                 EducationOccupation edu = pi.getEducationOccupation();
                 EducationDto eduDto = new EducationDto();
@@ -285,7 +291,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 dto.setEducation(eduDto);
             }
 
-            // Map Motivation
             if (pi.getMotivationAnswer() != null) {
                 MotivationAnswer m = pi.getMotivationAnswer();
                 MotivationDto mDto = new MotivationDto();
@@ -295,7 +300,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 dto.setMotivation(mDto);
             }
 
-            // Map Disability
             if (pi.getDisabilityInformation() != null) {
                 DisabilityInformation d = pi.getDisabilityInformation();
                 DisabilityDto dDto = new DisabilityDto();
@@ -305,7 +309,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 dto.setDisability(dDto);
             }
 
-            // Map Vulnerability
             if (pi.getVulnerabilityInformation() != null) {
                 VulnerabilityInformation v = pi.getVulnerabilityInformation();
                 VulnerabilityDto vDto = new VulnerabilityDto();
@@ -314,7 +317,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 vDto.setDescription(v.getDescription());
                 dto.setVulnerability(vDto);
             }
-
 
             List<Document> docs = documentRepository.findByPersonalInformation(pi);
             if (docs != null) {
@@ -326,7 +328,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 }).collect(Collectors.toList());
                 dto.setDocuments(docDtos);
             }
-
 
             List<EmergencyContact> contacts = emergencyContactRepository.findByPersonalInformation(pi);
             if (contacts != null) {
@@ -340,7 +341,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 dto.setEmergencyContacts(contactDtos);
             }
         }
-
         return dto;
     }
 }

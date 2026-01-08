@@ -7,6 +7,7 @@ import java.util.List;
 public interface UserApplicationService {
     ApplicationDto startApplicationForUser(Long userId);
     ApplicationDto submitApplication(Long applicationId, Long userId);
+    ApplicationDto getApplicationForUser(Long userId);
 
     // Progressive Steps
     ApplicationDto savePersonalInfo(Long applicationId, Long userId, PersonalInfoDto dto);
@@ -17,5 +18,6 @@ public interface UserApplicationService {
     ApplicationDto saveDocuments(Long applicationId, Long userId, List<DocumentDto> dtos);
     ApplicationDto saveEmergencyContacts(Long applicationId, Long userId, List<EmergencyContactDto> dtos);
 
-    double calculateCompletionPercentage(Long applicationId);
+    // FIX: This method must accept userId to verify ownership
+    double calculateCompletionPercentage(Long applicationId, Long userId);
 }
