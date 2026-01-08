@@ -9,5 +9,6 @@ public enum ApplicationStatus {
     ACCEPTED,
     REJECTED,
     SYSTEM_REJECTED,
-    APPROVED
+    APPROVED,
+    PENDING
 }

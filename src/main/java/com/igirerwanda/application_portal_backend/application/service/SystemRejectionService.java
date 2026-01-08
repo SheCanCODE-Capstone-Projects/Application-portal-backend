@@ -20,16 +20,13 @@ public class SystemRejectionService {
 
     @Transactional
     public void evaluateAndRejectIfNeeded(Application application) {
-        if (application.getCohort() == null) {
-            return;
-        }
+        if (application.getCohort() == null) return;
 
         boolean meetsRequirements = cohortRuleService.evaluateApplication(application, application.getCohort());
-        
+
         if (!meetsRequirements) {
-            String rejectionReason = cohortRuleService.getRejectionReason(application, application.getCohort());
             application.setStatus(ApplicationStatus.SYSTEM_REJECTED);
-            application.setSystemRejectionReason(rejectionReason);
+            application.setSystemRejectionReason(cohortRuleService.getRejectionReason(application, application.getCohort()));
             applicationRepository.save(application);
         }
     }

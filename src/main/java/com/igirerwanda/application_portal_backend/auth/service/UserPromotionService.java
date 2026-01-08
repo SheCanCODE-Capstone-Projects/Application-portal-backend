@@ -1,40 +1,37 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
-import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
-import com.igirerwanda.application_portal_backend.cohort.repository.CohortRepository;
+import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
+import com.igirerwanda.application_portal_backend.common.enums.UserStatus;
+import com.igirerwanda.application_portal_backend.notification.service.NotificationService;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class UserPromotionService {
 
     private final UserRepository userRepo;
-    private final CohortRepository cohortRepo;
+    private final NotificationService notificationService;
+    private final RegisterRepository registerRepo;
 
-    public UserPromotionService(UserRepository userRepo, CohortRepository cohortRepo) {
-        this.userRepo = userRepo;
-        this.cohortRepo = cohortRepo;
-    }
-
+    @Transactional
     public User promote(Register register) {
         if (register.getUser() != null) {
             return register.getUser();
         }
 
-        Cohort cohort = (Cohort) cohortRepo.findFirstByIsOpenTrue()
-                .orElseThrow(() -> new RuntimeException("No open cohort available"));
-
         User user = new User();
         user.setRegister(register);
-        user.setCohort(cohort);
+        user.setStatus(UserStatus.ACTIVE);
+        user = userRepo.save(user);
+        registerRepo.save(register);
 
-        userRepo.save(user);
-
-        register.setUser(user); // link back
+        notificationService.sendAccountActivatedNotification(user);
 
         return user;
     }
 }
-

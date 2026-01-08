@@ -2,9 +2,11 @@ package com.igirerwanda.application_portal_backend.cohort.dto;
 
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -25,4 +27,14 @@ public class CohortCreateDto {
 
     @NotEmpty(message = "At least one role is needed")
     private List<UserRole> roles;
+
+    private Boolean isOpen;
+    private Integer applicationLimit;
+    private Integer year;
+
+    @NotNull(message = "Start date is required")
+    private LocalDate startDate;
+
+    @NotNull(message = "End date is required")
+    private LocalDate endDate;
 }

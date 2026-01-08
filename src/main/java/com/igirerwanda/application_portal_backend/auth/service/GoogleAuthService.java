@@ -5,37 +5,26 @@ import com.igirerwanda.application_portal_backend.auth.repository.RegisterReposi
 import com.igirerwanda.application_portal_backend.common.enums.AuthProvider;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.config.JwtService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class GoogleAuthService {
 
     private final RegisterRepository registerRepository;
     private final JwtService jwtService;
+    private final UserPromotionService userPromotionService;
 
-    public GoogleAuthService(RegisterRepository registerRepository,
-                             JwtService jwtService,
-                             UserPromotionService userPromotionService, UserPromotionService userPromotionService1) {
-        this.registerRepository = registerRepository;
-        this.jwtService = jwtService;
-
-    }
-
+    @Transactional
     public String handleGoogleLogin(String email, String googleId, String name) {
 
-        Register user = registerRepository.findByEmail(email)
+        Register register = registerRepository.findByEmail(email)
                 .map(existing -> {
                     if (existing.getProvider() != AuthProvider.GOOGLE) {
-                        throw new IllegalStateException(
-                                "Email already registered with another provider"
-                        );
+                        throw new IllegalStateException("Email already registered with another provider");
                     }
-
-                    if (existing.getGoogleId() != null &&
-                            !existing.getGoogleId().equals(googleId)) {
-                        throw new IllegalStateException("Google account mismatch");
-                    }
-
                     return existing;
                 })
                 .orElseGet(() -> {
@@ -49,9 +38,9 @@ public class GoogleAuthService {
                     return registerRepository.save(newUser);
                 });
 
-        UserPromotionService userPromotionService = null;
-        userPromotionService.promote(user);
+        // ✅ CRITICAL: This ensures the record is created in the 'users' table
+        userPromotionService.promote(register);
 
-        return jwtService.generateAccessToken(user);
+        return jwtService.generateAccessToken(register);
     }
 }

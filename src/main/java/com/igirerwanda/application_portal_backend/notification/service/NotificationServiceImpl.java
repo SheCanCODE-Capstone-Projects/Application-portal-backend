@@ -1,11 +1,12 @@
 package com.igirerwanda.application_portal_backend.notification.service;
 
 import com.igirerwanda.application_portal_backend.application.entity.Application;
+import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
 import com.igirerwanda.application_portal_backend.notification.dto.NotificationDto;
 import com.igirerwanda.application_portal_backend.notification.entity.Notification;
 import com.igirerwanda.application_portal_backend.notification.entity.Notification.NotificationType;
 import com.igirerwanda.application_portal_backend.notification.repository.NotificationRepository;
-import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
+import com.igirerwanda.application_portal_backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -24,172 +25,120 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final EmailService emailService;
+    private final SmsService smsService;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Override
-    public void sendApplicationSubmittedNotification(Application application) {
-        String title = "Application Submitted Successfully";
-        String message = String.format("Your application for %s has been submitted and is now under review.", 
-                application.getCohort().getName());
-        
-        createAndSendNotification(application, title, message, NotificationType.APPLICATION_SUBMITTED);
-        
-        // Send email
-        String emailSubject = "Application Submitted - " + application.getCohort().getName();
-        String emailBody = String.format("""
-            Dear %s,
-            
-            Your application for %s has been successfully submitted.
-            
-            Application ID: %d
-            Submitted on: %s
-            
-            We will review your application and notify you of the next steps.
-            
-            Best regards,
-            Application Portal Team
-            """, 
-            application.getUser().getUsername(),
-            application.getCohort().getName(),
-            application.getId(),
-            application.getSubmittedAt());
-        
-        emailService.sendEmail(application.getUser().getEmail(), emailSubject, emailBody);
+    public void sendAccountActivatedNotification(User user) {
+        String title = "Account Activated";
+        String message = "Welcome to the Application Portal! Your account is now active. You can now select a cohort.";
+
+        notifyUserMultiChannel(user, title, message, NotificationType.GENERAL, null, "ACTIVE");
     }
 
     @Override
-    public void sendApplicationUnderReviewNotification(Application application) {
+    public void sendApplicationSubmittedNotification(Application app) {
+        String title = "Application Submitted";
+        String message = String.format("Your application for %s has been successfully submitted.", app.getCohort().getName());
+
+        notifyUserMultiChannel(app.getUser(), title, message, NotificationType.APPLICATION_SUBMITTED, app.getId(), "SUBMITTED");
+    }
+
+    @Override
+    public void sendApplicationUnderReviewNotification(Application app) {
         String title = "Application Under Review";
-        String message = String.format("Your application for %s is currently being reviewed by our team.", 
-                application.getCohort().getName());
-        
-        createAndSendNotification(application, title, message, NotificationType.APPLICATION_UNDER_REVIEW);
-        
-        // Send email
-        String emailSubject = "Application Under Review - " + application.getCohort().getName();
-        String emailBody = String.format("""
-            Dear %s,
-            
-            Your application for %s is now under review.
-            
-            Application ID: %d
-            Status: Under Review
-            
-            We will notify you once the review is complete.
-            
-            Best regards,
-            Application Portal Team
-            """, 
-            application.getUser().getUsername(),
-            application.getCohort().getName(),
-            application.getId());
-        
-        emailService.sendEmail(application.getUser().getEmail(), emailSubject, emailBody);
+        String message = String.format("Your application for %s is now being reviewed by our team.", app.getCohort().getName());
+
+        notifyUserMultiChannel(app.getUser(), title, message, NotificationType.APPLICATION_UNDER_REVIEW, app.getId(), "UNDER_REVIEW");
     }
 
     @Override
-    public void sendApplicationAcceptedNotification(Application application) {
-        String title = "Congratulations! Application Accepted";
-        String message = String.format("Your application for %s has been accepted! Welcome to the program.", 
-                application.getCohort().getName());
-        
-        createAndSendNotification(application, title, message, NotificationType.APPLICATION_ACCEPTED);
-        
-        // Send email
-        String emailSubject = "Application Accepted - Welcome to " + application.getCohort().getName();
-        String emailBody = String.format("""
-            Dear %s,
-            
-            Congratulations! Your application for %s has been ACCEPTED.
-            
-            Application ID: %d
-            Status: Accepted
-            
-            Welcome to the program! You will receive further instructions soon.
-            
-            Best regards,
-            Application Portal Team
-            """, 
-            application.getUser().getUsername(),
-            application.getCohort().getName(),
-            application.getId());
-        
-        emailService.sendEmail(application.getUser().getEmail(), emailSubject, emailBody);
+    public void sendApplicationAcceptedNotification(Application app) {
+        String title = "Congratulations! Application Approved";
+        String message = String.format("Your application for %s has been APPROVED! Welcome to the program.", app.getCohort().getName());
+
+        notifyUserMultiChannel(app.getUser(), title, message, NotificationType.APPLICATION_ACCEPTED, app.getId(), "ACCEPTED");
     }
 
     @Override
-    public void sendApplicationRejectedNotification(Application application) {
+    public void sendApplicationRejectedNotification(Application app) {
         String title = "Application Update";
-        String message = String.format("Thank you for your interest in %s. Unfortunately, your application was not selected this time.", 
-                application.getCohort().getName());
-        
-        createAndSendNotification(application, title, message, NotificationType.APPLICATION_REJECTED);
-        
-        // Send email
-        String emailSubject = "Application Update - " + application.getCohort().getName();
-        String emailBody = String.format("""
-            Dear %s,
-            
-            Thank you for your interest in %s.
-            
-            Application ID: %d
-            Status: Not Selected
-            
-            While your application was not selected this time, we encourage you to apply for future opportunities.
-            
-            Best regards,
-            Application Portal Team
-            """, 
-            application.getUser().getUsername(),
-            application.getCohort().getName(),
-            application.getId());
-        
-        emailService.sendEmail(application.getUser().getEmail(), emailSubject, emailBody);
+        String message = String.format("Regarding your application for %s: We have updated your status.", app.getCohort().getName());
+
+        notifyUserMultiChannel(app.getUser(), title, message, NotificationType.APPLICATION_REJECTED, app.getId(), "REJECTED");
     }
 
     @Override
-    public void sendInterviewScheduledNotification(Application application, String interviewDetails) {
+    public void sendInterviewScheduledNotification(Application app, String details) {
         String title = "Interview Scheduled";
-        String message = String.format("An interview has been scheduled for your %s application. %s", 
-                application.getCohort().getName(), interviewDetails);
-        
-        createAndSendNotification(application, title, message, NotificationType.INTERVIEW_SCHEDULED);
-        
-        // Send email
-        String emailSubject = "Interview Scheduled - " + application.getCohort().getName();
-        String emailBody = String.format("""
-            Dear %s,
-            
-            An interview has been scheduled for your %s application.
-            
-            Application ID: %d
-            Interview Details: %s
-            
-            Please prepare accordingly and contact us if you have any questions.
-            
-            Best regards,
-            Application Portal Team
-            """, 
-            application.getUser().getUsername(),
-            application.getCohort().getName(),
-            application.getId(),
-            interviewDetails);
-        
-        emailService.sendEmail(application.getUser().getEmail(), emailSubject, emailBody);
+        String message = String.format("An interview for %s is scheduled. Details: %s", app.getCohort().getName(), details);
+
+        notifyUserMultiChannel(app.getUser(), title, message, NotificationType.INTERVIEW_SCHEDULED, app.getId(), "INTERVIEW_SCHEDULED");
     }
+
+    // --- Helper for sending to all channels ---
+    private void notifyUserMultiChannel(User user, String title, String message, NotificationType type, Long appId, String status) {
+        // 1. In-App Notification (Database + WebSocket)
+        saveInAppNotification(user, title, message, type, appId, status);
+
+        // 2. Email Notification
+        if (user.getRegister().getEmail() != null) {
+            emailService.sendEmail(user.getRegister().getEmail(), title, message);
+        }
+
+        // 3. SMS Notification
+        // Check Register phone first, then PersonalInfo phone if Register is null
+//        String phone = user.getRegister().getPhone();
+
+        // Fallback to application phone if available and register phone is null
+//        if (phone == null && appId != null) {
+//            // Logic to fetch from personal info could go here if needed,
+//            // but usually we rely on the main account phone.
+//        }
+//
+//        if (phone != null && !phone.isEmpty()) {
+//            smsService.sendSms(phone, message);
+//        }
+    }
+
+    private void saveInAppNotification(User user, String title, String message, NotificationType type, Long appId, String status) {
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setType(type);
+        notification.setApplicationId(appId);
+        notification.setApplicationStatus(status);
+        notification.setRead(false);
+
+        Notification saved = notificationRepository.save(notification);
+
+        // Real-time broadcast
+        try {
+            messagingTemplate.convertAndSendToUser(
+                    user.getId().toString(),
+                    "/queue/notifications",
+                    mapToDto(saved)
+            );
+        } catch (Exception e) {
+            log.error("Failed to send WebSocket notification", e);
+        }
+    }
+
+    // --- Management Methods ---
 
     @Override
     @Transactional(readOnly = true)
     public List<NotificationDto> getUserNotifications(Long userId) {
-        List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
-        return notifications.stream().map(this::mapToDto).collect(Collectors.toList());
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId)
+                .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<NotificationDto> getUnreadNotifications(Long userId) {
-        List<Notification> notifications = notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
-        return notifications.stream().map(this::mapToDto).collect(Collectors.toList());
+        return notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId)
+                .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Override
@@ -202,11 +151,11 @@ public class NotificationServiceImpl implements NotificationService {
     public void markAsRead(Long notificationId, Long userId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotFoundException("Notification not found"));
-        
+
         if (!notification.getUser().getId().equals(userId)) {
-            throw new SecurityException("Access denied: You can only access your own notifications");
+            throw new SecurityException("Access denied");
         }
-        
+
         notification.setRead(true);
         notification.setReadAt(LocalDateTime.now());
         notificationRepository.save(notification);
@@ -214,55 +163,20 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void markAllAsRead(Long userId) {
-        List<Notification> unreadNotifications = notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
+        List<Notification> unread = notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
         LocalDateTime now = LocalDateTime.now();
-        
-        unreadNotifications.forEach(notification -> {
-            notification.setRead(true);
-            notification.setReadAt(now);
+        unread.forEach(n -> {
+            n.setRead(true);
+            n.setReadAt(now);
         });
-        
-        notificationRepository.saveAll(unreadNotifications);
+        notificationRepository.saveAll(unread);
     }
 
-    private void createAndSendNotification(Application application, String title, String message, NotificationType type) {
-        // Create in-app notification
-        Notification notification = new Notification();
-        notification.setUser(application.getUser());
-        notification.setTitle(title);
-        notification.setMessage(message);
-        notification.setType(type);
-        notification.setApplicationId(application.getId());
-        notification.setApplicationStatus(application.getStatus().toString());
-        
-        notification = notificationRepository.save(notification);
-        
-        // Send real-time notification via WebSocket
-        try {
-            NotificationDto dto = mapToDto(notification);
-            messagingTemplate.convertAndSendToUser(
-                    application.getUser().getId().toString(),
-                    "/queue/notifications",
-                    dto
-            );
-            log.info("Real-time notification sent to user {}", application.getUser().getId());
-        } catch (Exception e) {
-            log.error("Failed to send real-time notification to user {}: {}", 
-                    application.getUser().getId(), e.getMessage());
-        }
-    }
-
-    private NotificationDto mapToDto(Notification notification) {
-        NotificationDto dto = new NotificationDto();
-        dto.setId(notification.getId());
-        dto.setTitle(notification.getTitle());
-        dto.setMessage(notification.getMessage());
-        dto.setType(notification.getType());
-        dto.setRead(notification.isRead());
-        dto.setCreatedAt(notification.getCreatedAt());
-        dto.setReadAt(notification.getReadAt());
-        dto.setApplicationId(notification.getApplicationId());
-        dto.setApplicationStatus(notification.getApplicationStatus());
-        return dto;
+    private NotificationDto mapToDto(Notification n) {
+        return new NotificationDto(
+                n.getId(), n.getTitle(), n.getMessage(), n.getType(),
+                n.isRead(), n.getCreatedAt(), n.getReadAt(),
+                n.getApplicationId(), n.getApplicationStatus()
+        );
     }
 }

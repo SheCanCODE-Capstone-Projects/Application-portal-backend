@@ -1,9 +1,6 @@
 package com.igirerwanda.application_portal_backend.config;
 
-import com.igirerwanda.application_portal_backend.auth.entity.Register;
-import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
-import com.igirerwanda.application_portal_backend.common.enums.AuthProvider;
-import com.igirerwanda.application_portal_backend.common.enums.UserRole;
+import com.igirerwanda.application_portal_backend.auth.service.GoogleAuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,22 +10,19 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final JwtService jwtService;
-    private final RegisterRepository registerRepository;
+    private final GoogleAuthService googleAuthService;
 
     @Value("${app.oauth2.redirect-url:http://localhost:3000/auth/callback}")
     private String redirectUrl;
 
-    public OAuth2AuthenticationSuccessHandler(
-            JwtService jwtService,
-            RegisterRepository registerRepository
-    ) {
-        this.jwtService = jwtService;
-        this.registerRepository = registerRepository;
+    public OAuth2AuthenticationSuccessHandler(GoogleAuthService googleAuthService) {
+        this.googleAuthService = googleAuthService;
     }
 
     @Override
@@ -45,27 +39,21 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         String googleId = oauthUser.getAttribute("sub");
 
         if (email == null || googleId == null) {
-            response.sendRedirect(
-                    redirectUrl.replace("/callback", "/error") + "?message=Missing+required+user+info"
-            );
+            String errorUrl = redirectUrl.replace("/callback", "/error");
+            response.sendRedirect(errorUrl + "?message=Missing+required+user+info");
             return;
         }
 
+        try {
 
-        Register user = registerRepository.findByEmail(email)
-                .orElseGet(() -> {
-                    Register newUser = new Register();
-                    newUser.setEmail(email);
-                    newUser.setUsername(name);
-                    newUser.setGoogleId(googleId);
-                    newUser.setVerified(true);
-                    newUser.setProvider(AuthProvider.GOOGLE);
-                    newUser.setRole(UserRole.APPLICANT);
-                    return registerRepository.save(newUser);
-                });
+            String token = googleAuthService.handleGoogleLogin(email, googleId, name);
 
-        String token = jwtService.generateAccessToken(user);
+            response.sendRedirect(redirectUrl + "?token=" + token);
 
-        response.sendRedirect(redirectUrl + "?token=" + token);
+        } catch (Exception e) {
+            String errorMsg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            String errorUrl = redirectUrl.replace("/callback", "/error");
+            response.sendRedirect(errorUrl + "?message=" + errorMsg);
+        }
     }
 }

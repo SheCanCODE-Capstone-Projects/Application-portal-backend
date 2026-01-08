@@ -8,6 +8,7 @@ import com.igirerwanda.application_portal_backend.common.enums.AuthProvider;
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
 import com.igirerwanda.application_portal_backend.common.exception.ValidationException;
 import com.igirerwanda.application_portal_backend.notification.service.EmailService;
+import jakarta.transaction.Transactional; // Ensure this is the correct import
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,65 +23,68 @@ public class EmailVerificationService {
     private final EmailService emailService;
     private final UserPromotionService userPromotionService;
 
+    // Fixed constructor parameters
     public EmailVerificationService(
             EmailVerificationTokenRepository tokenRepo,
             RegisterRepository registerRepo,
             EmailService emailService,
-            UserPromotionService userPromotionService, UserPromotionService userPromotionService1) {
+            UserPromotionService userPromotionService) {
         this.tokenRepo = tokenRepo;
         this.registerRepo = registerRepo;
         this.emailService = emailService;
-        this.userPromotionService = userPromotionService1;
+        this.userPromotionService = userPromotionService;
     }
 
+    @Transactional
     public Map<String, String> verify(String tokenValue) {
-
         EmailVerificationToken token = tokenRepo.findByToken(tokenValue)
-                .orElseThrow(() ->
-                        new ValidationException("Invalid verification token")
-                );
+                .orElseThrow(() -> new ValidationException("Invalid verification token"));
 
         if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
             tokenRepo.delete(token);
-            throw new ValidationException("Verification token has expired");
+            throw new ValidationException("Token has expired");
+        }
+        Register register = token.getRegister();
+
+        if (!register.isVerified()) {
+            register.setVerified(true);
+            registerRepo.save(register);
+
+
+            userPromotionService.promote(register);
         }
 
-        Register user = token.getRegister();
-        user.setVerified(true);
-
-        registerRepo.save(user);
         tokenRepo.delete(token);
-
         return Map.of("message", "Email verified successfully");
     }
 
+    @Transactional
     public Map<String, String> resendVerification(String email) {
-
         Register user = registerRepo.findByEmail(email)
-                .orElseThrow(() ->
-                        new NotFoundException("User not found")
-                );
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (user.isVerified()) {
             return Map.of("message", "Email already verified");
         }
 
         if (user.getProvider() == AuthProvider.GOOGLE) {
-            throw new ValidationException(
-                    "Google accounts do not require email verification"
-            );
+            throw new ValidationException("Google accounts do not require email verification");
         }
 
+        // 1. Delete the old token
         tokenRepo.deleteByRegister(user);
 
+        // 2. CRITICAL: Force the database to execute the delete RIGHT NOW
+        // This clears the unique constraint for the register_id
+        tokenRepo.flush();
+
+        // 3. Now it is safe to create the new one
         EmailVerificationToken token = new EmailVerificationToken();
         token.setToken(UUID.randomUUID().toString());
         token.setRegister(user);
         token.setExpiryDate(LocalDateTime.now().plusHours(24));
 
         tokenRepo.save(token);
-
-        userPromotionService.promote(user);
 
         emailService.sendVerificationEmail(user, token.getToken());
 

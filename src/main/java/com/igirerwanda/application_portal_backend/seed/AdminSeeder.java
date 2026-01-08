@@ -2,56 +2,53 @@ package com.igirerwanda.application_portal_backend.seed;
 
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
 import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
-import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
-import com.igirerwanda.application_portal_backend.cohort.repository.CohortRepository;
 import com.igirerwanda.application_portal_backend.common.enums.AuthProvider;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.common.enums.UserStatus;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.user.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-//@Component
+@Component
+@RequiredArgsConstructor
 public class AdminSeeder implements CommandLineRunner {
 
-    @Autowired
-    private RegisterRepository registerRepository;
-    
-    @Autowired
-    private UserRepository userRepository;
-    
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private CohortRepository cohortRepository;
-
+    private final RegisterRepository registerRepository;
+    private final UserRepository userRepository;
+    // Removed CohortRepository as it is no longer needed
+    private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public void run(String... args) {
-        if (!registerRepository.existsByEmail("admin@portal.com")) {
-            Register register = new Register();
-            register.setEmail("admin@portal.com");
-            register.setUsername("admin");
-            register.setPassword(passwordEncoder.encode("admin123"));
-            register.setRole(UserRole.ADMIN);
-            register.setVerified(true);
-            register.setProvider(AuthProvider.valueOf("LOCAL"));
-            
-            Register savedRegister = registerRepository.save(register);
 
-            Cohort cohort = cohortRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("Default cohort not found"));
-            
-            User user = new User();
-            user.setRegister(savedRegister);
-            user.setCohort(cohort);
-            user.setStatus("ACTIVE");
-            
-            userRepository.save(user);
+        if (registerRepository.existsByRole(UserRole.ADMIN)) {
+            return;
         }
+
+        Register register = new Register();
+        register.setEmail("admin@portal.com");
+        register.setUsername("admin");
+        register.setPassword(passwordEncoder.encode("admin123"));
+        register.setRole(UserRole.ADMIN);
+        register.setVerified(true);
+        register.setProvider(AuthProvider.LOCAL);
+
+        Register savedRegister = registerRepository.save(register);
+
+        // Removed the block that searches for a Cohort
+
+        User user = new User();
+        user.setRegister(savedRegister);
+        // Removed user.setCohort(cohort);
+        user.setStatus(UserStatus.ACTIVE);
+
+        userRepository.save(user);
+
+        System.out.println("✅ Admin user created successfully");
     }
 }
