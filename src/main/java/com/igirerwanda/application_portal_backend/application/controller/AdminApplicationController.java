@@ -24,7 +24,7 @@ public class AdminApplicationController {
 
     private final AdminApplicationService adminService;
 
-    // --- Retrieval Endpoints ---
+
 
     @GetMapping
     @Operation(summary = "Get All Active", description = "Get all active (non-deleted, non-archived) applications")
@@ -80,7 +80,7 @@ public class AdminApplicationController {
         ));
     }
 
-    // --- Workflow Action Endpoints (PUT by ID) ---
+
 
     @PutMapping("/{id}/accept")
     @Operation(summary = "Accept Application", description = "Approves application and sends notification emails.")
@@ -111,7 +111,6 @@ public class AdminApplicationController {
         ));
     }
 
-    // --- Management Action Endpoints ---
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Soft Delete", description = "Soft deletes an application.")

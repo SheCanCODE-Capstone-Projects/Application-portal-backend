@@ -21,7 +21,6 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
     private final ApplicationRepository applicationRepository;
     private final NotificationService notificationService;
 
-    // --- Retrieval Methods ---
 
     @Override
     public List<ApplicationDto> getAllActiveApplications() {
@@ -60,13 +59,11 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
 
     @Override
     public ApplicationDto getApplicationDetails(Long applicationId) {
-        // FIX: Use findById to allow admins to see Deleted/Archived/SystemRejected apps
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new NotFoundException("Application not found with id: " + applicationId));
         return mapToDto(app);
     }
 
-    // --- Workflow Actions ---
 
     @Override
     public ApplicationDto acceptApplication(Long applicationId) {
@@ -74,7 +71,6 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
         app.setStatus(ApplicationStatus.ACCEPTED);
         Application saved = applicationRepository.save(app);
 
-        // Trigger Email & System Notification
         notificationService.sendApplicationAcceptedNotification(saved);
 
         return mapToDto(saved);
@@ -86,7 +82,6 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
         app.setStatus(ApplicationStatus.REJECTED);
         Application saved = applicationRepository.save(app);
 
-        // Trigger Email & System Notification
         notificationService.sendApplicationRejectedNotification(saved);
 
         return mapToDto(saved);
@@ -100,18 +95,17 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
         app.setInterviewDate(request.getInterviewDate());
         Application saved = applicationRepository.save(app);
 
-        // Format message with Date/Time and Instructions for the email
+        String instructions = request.getInstructions() != null
+                ? request.getInstructions() : "No instructions provided";
         String details = String.format("Date: %s. Instructions: %s",
                 request.getInterviewDate().toString(),
-                request.getInstructions());
+                instructions);
 
-        // Trigger Notification (Sends Email)
         notificationService.sendInterviewScheduledNotification(saved, details);
 
         return mapToDto(saved);
     }
 
-    // --- Management Actions ---
 
     @Override
     public void softDeleteApplication(Long applicationId) {
@@ -132,18 +126,17 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
         Application app = findById(applicationId);
         app.setDeleted(false);
         app.setArchived(false);
-        // Optionally reset status if needed, or keep previous status
         applicationRepository.save(app);
     }
 
-    // --- Helpers ---
+
 
     private Application findById(Long id) {
         return applicationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Application not found with id: " + id));
     }
 
-    // FULL DTO MAPPING
+
     private ApplicationDto mapToDto(Application app) {
         ApplicationDto dto = new ApplicationDto();
         dto.setId(app.getId());
