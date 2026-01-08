@@ -1,8 +1,10 @@
 package com.igirerwanda.application_portal_backend.application.entity;
+
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,6 +33,7 @@ public class Application {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @NotNull(message = "Cohort is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cohort_id", nullable = false)
     private Cohort cohort;
@@ -38,9 +41,19 @@ public class Application {
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status = ApplicationStatus.PENDING_REVIEW;
 
+
     private boolean isSystemRejected = false;
 
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    @Column(nullable = false)
+    private boolean archived = false;
+
+
     private LocalDateTime submittedAt;
+
+    private LocalDateTime interviewDate;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -50,7 +63,6 @@ public class Application {
 
     private String systemRejectionReason;
 
-    // Relationship: One application → One personal_information
     @OneToOne(mappedBy = "application", cascade = CascadeType.ALL)
     private PersonalInformation personalInformation;
 }
