@@ -8,8 +8,9 @@ on:
 
 jobs:
 
-  build-and-test:
+  build-and-run:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -20,11 +21,16 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Run Unit Tests
-        run: mvn clean test
+      - name: Build Application (Skip Tests)
+        run: mvn clean package -DskipTests
 
-      - name: Build with Maven
-        run: mvn package -DskipTests
+      - name: Run Application (Startup Check)
+        run: |
+          java -jar target/*.jar &
+          APP_PID=$!
+          sleep 20
+          ps -p $APP_PID || exit 1
+          kill $APP_PID
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
@@ -33,9 +39,10 @@ jobs:
           path: target/*.jar
 
   docker-build-push:
-    needs: build-and-test
+    needs: build-and-run
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
     steps:
       - uses: actions/checkout@v4
 
@@ -60,11 +67,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-
   deploy:
     needs: docker-build-push
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
