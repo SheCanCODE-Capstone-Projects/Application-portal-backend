@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  # 1. Test Database (Ephemeral)
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: portal-test-db
+    environment:
+      POSTGRES_DB: test_db
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5434:5432" # Different port to avoid conflict with local DB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    tmpfs: /var/lib/postgresql/data # Runs DB in RAM for speed
+
+  # 2. Test Runner
+  app-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build # Stops at the Maven build stage to run tests
+    container_name: portal-test-runner
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-test:5432/test_db
+      SPRING_DATASOURCE_USERNAME: test_user
+      SPRING_DATASOURCE_PASSWORD: test_password
+      # Override H2 settings for Docker integration tests
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+    command: mvn verify -Dspring.profiles.active=test

@@ -1,6 +1,7 @@
-package com.igirerwanda.application_portal_backend.auth.controller;
+package com.igirerwanda.application_portal_backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.igirerwanda.application_portal_backend.auth.controller.AuthController;
 import com.igirerwanda.application_portal_backend.auth.dto.RegisterRequest;
 import com.igirerwanda.application_portal_backend.auth.service.AuthService;
 import org.junit.jupiter.api.Test;
