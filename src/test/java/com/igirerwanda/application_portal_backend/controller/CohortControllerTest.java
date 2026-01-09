@@ -5,6 +5,7 @@ import com.igirerwanda.application_portal_backend.cohort.controller.CohortContro
 import com.igirerwanda.application_portal_backend.cohort.dto.CohortCreateDto;
 import com.igirerwanda.application_portal_backend.cohort.dto.CohortDto;
 import com.igirerwanda.application_portal_backend.cohort.service.CohortService;
+import com.igirerwanda.application_portal_backend.config.JwtService; // Import this
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -33,6 +34,10 @@ class CohortControllerTest {
     @MockBean
     private CohortService cohortService;
 
+    // Fix: Mock the JwtService required by JwtAuthenticationFilter
+    @MockBean
+    private JwtService jwtService;
+
     @MockBean
     private SimpMessagingTemplate messagingTemplate;
 
@@ -40,7 +45,7 @@ class CohortControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    @WithMockUser(roles = "ADMIN") // Mock an admin user
+    @WithMockUser(roles = "ADMIN")
     void createCohort_Success() throws Exception {
         CohortCreateDto createDto = new CohortCreateDto();
         createDto.setName("Cohort 1");

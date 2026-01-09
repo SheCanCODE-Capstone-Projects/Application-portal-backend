@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igirerwanda.application_portal_backend.auth.controller.AuthController;
 import com.igirerwanda.application_portal_backend.auth.dto.RegisterRequest;
 import com.igirerwanda.application_portal_backend.auth.service.AuthService;
+import com.igirerwanda.application_portal_backend.config.JwtService; // Import this
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -28,6 +29,10 @@ class AuthControllerTest {
     @MockBean
     private AuthService authService;
 
+    // Fix: Mock the JwtService required by JwtAuthenticationFilter
+    @MockBean
+    private JwtService jwtService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -42,7 +47,7 @@ class AuthControllerTest {
                 .thenReturn(Map.of("message", "Verification email sent"));
 
         mockMvc.perform(post("/api/v1/auth/register")
-                        .with(csrf()) // Required if CSRF is enabled, good practice in tests
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())

@@ -7,7 +7,6 @@ import com.igirerwanda.application_portal_backend.application.service.Applicatio
 import com.igirerwanda.application_portal_backend.application.service.UserApplicationServiceImpl;
 import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
-import com.igirerwanda.application_portal_backend.common.exception.ResourceNotFoundException;
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.user.service.UserService;
@@ -19,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,11 +28,16 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UserApplicationServiceTest {
 
-    @Mock private ApplicationRepository applicationRepository;
-    @Mock private UserService userService;
-    @Mock private PersonalInfoRepository personalInfoRepository;
-    @Mock private ApplicationValidationService validationService;
-    // Mock other repositories as needed (educational, motivation, etc.)
+    @Mock
+    private ApplicationRepository applicationRepository;
+    @Mock
+    private UserService userService;
+    @Mock
+    private PersonalInfoRepository personalInfoRepository;
+    @Mock
+    private ApplicationValidationService validationService;
+    @Mock
+    private DocumentRepository documentRepository; // Required to prevent NullPointerException in mapToDto
 
     @InjectMocks
     private UserApplicationServiceImpl userApplicationService;
@@ -102,6 +107,9 @@ class UserApplicationServiceTest {
         when(applicationRepository.findById(50L)).thenReturn(Optional.of(testApplication));
         when(personalInfoRepository.save(any(PersonalInformation.class))).thenReturn(new PersonalInformation());
 
+        // Mocking document repository calls used in mapToDto
+        when(documentRepository.findByPersonalInformation(any())).thenReturn(Collections.emptyList());
+
         // When
         ApplicationDto result = userApplicationService.savePersonalInfo(50L, 99L, infoDto);
 
@@ -114,7 +122,7 @@ class UserApplicationServiceTest {
     void savePersonalInfo_NotOwner_ThrowsAccessDenied() {
         // Given
         Register otherRegister = new Register();
-        otherRegister.setId(88L); // Different ID
+        otherRegister.setId(88L);
         testUser.setRegister(otherRegister);
 
         when(applicationRepository.findById(50L)).thenReturn(Optional.of(testApplication));
@@ -122,7 +130,7 @@ class UserApplicationServiceTest {
         // When & Then
         PersonalInfoDto infoDto = new PersonalInfoDto();
         assertThrows(AccessDeniedException.class, () ->
-                userApplicationService.savePersonalInfo(50L, 99L, infoDto) // Passing 99L, but owner is 88L
+                userApplicationService.savePersonalInfo(50L, 99L, infoDto)
         );
     }
 
@@ -132,6 +140,12 @@ class UserApplicationServiceTest {
         when(applicationRepository.findById(50L)).thenReturn(Optional.of(testApplication));
         doNothing().when(validationService).validateForSubmission(any(Application.class));
         when(applicationRepository.save(any(Application.class))).thenReturn(testApplication);
+
+        // Mocking document repository used in mapToDto
+        // Assuming mapToDto is called at the end of submitApplication
+        if (testApplication.getPersonalInformation() != null) {
+            when(documentRepository.findByPersonalInformation(any())).thenReturn(Collections.emptyList());
+        }
 
         // When
         ApplicationDto result = userApplicationService.submitApplication(50L, 99L);
