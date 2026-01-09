@@ -7,11 +7,6 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    boolean existsByRegister(Register register);
-
-    Optional<User> findByRegister(Register register);
-
-    // FIX: This allows looking up User via Register's email field
     Optional<User> findByRegisterEmail(String email);
     Optional<User> findByRegisterId(Long registerId);
 }
