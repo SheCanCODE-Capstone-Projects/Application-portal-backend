@@ -5,7 +5,7 @@ import com.igirerwanda.application_portal_backend.cohort.controller.CohortContro
 import com.igirerwanda.application_portal_backend.cohort.dto.CohortCreateDto;
 import com.igirerwanda.application_portal_backend.cohort.dto.CohortDto;
 import com.igirerwanda.application_portal_backend.cohort.service.CohortService;
-import com.igirerwanda.application_portal_backend.config.JwtService; // Import this
+import com.igirerwanda.application_portal_backend.config.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,7 +23,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CohortController.class)
 class CohortControllerTest {
@@ -34,10 +35,11 @@ class CohortControllerTest {
     @MockBean
     private CohortService cohortService;
 
-    // Fix: Mock the JwtService required by JwtAuthenticationFilter
+    // REQUIRED: Mocks the dependency for JwtAuthenticationFilter
     @MockBean
     private JwtService jwtService;
 
+    // REQUIRED: Mocks websocket template if controller uses it
     @MockBean
     private SimpMessagingTemplate messagingTemplate;
 

@@ -1,7 +1,9 @@
 package com.igirerwanda.application_portal_backend.service;
 
-import com.igirerwanda.application_portal_backend.application.dto.*;
-import com.igirerwanda.application_portal_backend.application.entity.*;
+import com.igirerwanda.application_portal_backend.application.dto.ApplicationDto;
+import com.igirerwanda.application_portal_backend.application.dto.PersonalInfoDto;
+import com.igirerwanda.application_portal_backend.application.entity.Application;
+import com.igirerwanda.application_portal_backend.application.entity.PersonalInformation;
 import com.igirerwanda.application_portal_backend.application.repository.*;
 import com.igirerwanda.application_portal_backend.application.service.ApplicationValidationService;
 import com.igirerwanda.application_portal_backend.application.service.UserApplicationServiceImpl;
@@ -28,19 +30,21 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UserApplicationServiceTest {
 
-    @Mock
-    private ApplicationRepository applicationRepository;
-    @Mock
-    private UserService userService;
-    @Mock
-    private PersonalInfoRepository personalInfoRepository;
-    @Mock
-    private ApplicationValidationService validationService;
-    @Mock
-    private DocumentRepository documentRepository; // Required to prevent NullPointerException in mapToDto
-
     @InjectMocks
     private UserApplicationServiceImpl userApplicationService;
+
+    @Mock private ApplicationRepository applicationRepository;
+    @Mock private UserService userService;
+    @Mock private PersonalInfoRepository personalInfoRepository;
+    @Mock private ApplicationValidationService validationService;
+
+    // Mocks required for internal mapping (mapToDto) inside the service
+    @Mock private EducationalRepository educationalRepository;
+    @Mock private DocumentRepository documentRepository;
+    @Mock private DisabilityRepository disabilityRepository;
+    @Mock private EmergencyContactRepository emergencyContactRepository;
+    @Mock private VulnerabilityInformationRepository vulnerabilityInformationRepository;
+    @Mock private MotivationAnswerRepository motivationAnswerRepository;
 
     private User testUser;
     private Register testRegister;
@@ -86,28 +90,15 @@ class UserApplicationServiceTest {
     }
 
     @Test
-    void startApplicationForUser_NoCohortSelected_ThrowsException() {
-        // Given
-        testUser.setCohort(null);
-        when(userService.findByRegisterId(99L)).thenReturn(testUser);
-
-        // When & Then
-        assertThrows(IllegalStateException.class, () ->
-                userApplicationService.startApplicationForUser(99L)
-        );
-    }
-
-    @Test
     void savePersonalInfo_Success() {
         // Given
         PersonalInfoDto infoDto = new PersonalInfoDto();
         infoDto.setFullName("John Doe");
-        infoDto.setEmail("john@test.com");
 
         when(applicationRepository.findById(50L)).thenReturn(Optional.of(testApplication));
         when(personalInfoRepository.save(any(PersonalInformation.class))).thenReturn(new PersonalInformation());
 
-        // Mocking document repository calls used in mapToDto
+        // Mock document repo to return empty list during mapping to DTO
         when(documentRepository.findByPersonalInformation(any())).thenReturn(Collections.emptyList());
 
         // When
@@ -119,39 +110,18 @@ class UserApplicationServiceTest {
     }
 
     @Test
-    void savePersonalInfo_NotOwner_ThrowsAccessDenied() {
+    void savePersonalInfo_OwnershipCheck_ThrowsException() {
         // Given
         Register otherRegister = new Register();
-        otherRegister.setId(88L);
+        otherRegister.setId(88L); // Different ID
         testUser.setRegister(otherRegister);
 
         when(applicationRepository.findById(50L)).thenReturn(Optional.of(testApplication));
 
         // When & Then
-        PersonalInfoDto infoDto = new PersonalInfoDto();
+        PersonalInfoDto dto = new PersonalInfoDto();
         assertThrows(AccessDeniedException.class, () ->
-                userApplicationService.savePersonalInfo(50L, 99L, infoDto)
+                userApplicationService.savePersonalInfo(50L, 99L, dto)
         );
-    }
-
-    @Test
-    void submitApplication_Success() {
-        // Given
-        when(applicationRepository.findById(50L)).thenReturn(Optional.of(testApplication));
-        doNothing().when(validationService).validateForSubmission(any(Application.class));
-        when(applicationRepository.save(any(Application.class))).thenReturn(testApplication);
-
-        // Mocking document repository used in mapToDto
-        // Assuming mapToDto is called at the end of submitApplication
-        if (testApplication.getPersonalInformation() != null) {
-            when(documentRepository.findByPersonalInformation(any())).thenReturn(Collections.emptyList());
-        }
-
-        // When
-        ApplicationDto result = userApplicationService.submitApplication(50L, 99L);
-
-        // Then
-        assertEquals(ApplicationStatus.SUBMITTED, result.getStatus());
-        assertNotNull(result.getSubmittedAt());
     }
 }

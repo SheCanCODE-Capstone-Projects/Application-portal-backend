@@ -1,6 +1,6 @@
 package com.igirerwanda.application_portal_backend.controller;
 
-import com.igirerwanda.application_portal_backend.config.JwtService; // Import this
+import com.igirerwanda.application_portal_backend.config.JwtService;
 import com.igirerwanda.application_portal_backend.user.controller.UserController;
 import com.igirerwanda.application_portal_backend.user.dto.UserResponseDto;
 import com.igirerwanda.application_portal_backend.user.service.UserService;
@@ -26,7 +26,6 @@ class UserControllerTest {
     @MockBean
     private UserService userService;
 
-    // Fix: Mock the JwtService required by JwtAuthenticationFilter
     @MockBean
     private JwtService jwtService;
 
