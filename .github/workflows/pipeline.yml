@@ -26,7 +26,7 @@ jobs:
 
       - name: Run Application (Startup Check)
         run: |
-          java -jar target/*.jar &
+          SPRING_PROFILES_ACTIVE=ci java -jar target/*.jar &
           APP_PID=$!
           sleep 20
           ps -p $APP_PID || exit 1

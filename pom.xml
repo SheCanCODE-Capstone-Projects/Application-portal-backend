@@ -120,7 +120,12 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
-<!-- Flyway removed - using Spring Data JPA + Hibernate DDL instead -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Flyway removed - using Spring Data JPA + Hibernate DDL instead -->
 
     </dependencies>
 
