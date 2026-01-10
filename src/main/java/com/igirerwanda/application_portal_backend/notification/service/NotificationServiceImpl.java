@@ -258,4 +258,6 @@ public class NotificationServiceImpl implements NotificationService {
                 n.getApplicationId(), n.getApplicationStatus()
         );
     }
+
+    
 }

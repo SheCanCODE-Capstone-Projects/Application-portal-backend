@@ -5,7 +5,6 @@ import com.igirerwanda.application_portal_backend.cohort.repository.CohortReposi
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
 import com.igirerwanda.application_portal_backend.user.dto.UserResponseDto;
 import com.igirerwanda.application_portal_backend.user.entity.User;
-// import com.igirerwanda.application_portal_backend.user.mapper.UserMapper; // <--- REMOVE THIS IMPORT
 import com.igirerwanda.application_portal_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,11 +20,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final CohortRepository cohortRepository;
-    // private final UserMapper userMapper; // <--- REMOVE THIS FIELD
 
-    /**
-     * Helper to get the current logged-in user.
-     */
     private User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByRegisterEmail(email)
@@ -53,10 +49,16 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public UserResponseDto getCurrentUserProfile() {
         User user = getAuthenticatedUser();
-        // CALL MANUAL MAPPING METHOD HERE
         return mapToDto(user);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponseDto> getAllUsersDetailed() {
+        return userRepository.findAll().stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
     @Override
     @Transactional
     public void applyToCohort(Long cohortId) {
@@ -95,24 +97,29 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(user);
     }
 
-    // --- NEW MANUAL MAPPING METHOD ---
+
     private UserResponseDto mapToDto(User user) {
         UserResponseDto dto = new UserResponseDto();
 
-        // Map Register details (email/username)
+
         if (user.getRegister() != null) {
             dto.setEmail(user.getRegister().getEmail());
             dto.setUsername(user.getRegister().getUsername());
         }
 
-        // Map Cohort details
+
         if (user.getCohort() != null) {
             dto.setCohortId(user.getCohort().getId());
             dto.setCohortName(user.getCohort().getName());
         }
 
-        // Map any other fields you need here
-        // dto.setId(user.getId());
+        dto.setStatus(user.getStatus());
+        dto.setCreatedAt(user.getCreatedAt());
+
+        if (user.getCohort() != null) {
+            dto.setCohortId(user.getCohort().getId());
+            dto.setCohortName(user.getCohort().getName());
+        }
 
         return dto;
     }

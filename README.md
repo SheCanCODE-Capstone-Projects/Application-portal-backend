@@ -105,7 +105,7 @@ ApplicationPortalBackend/
 │   │   ├── user/                     # User management
 │   │   └── ApplicationPortalBackendApplication.java   # Main application class
 │   │
-│   └── resources/                    # Configuration files (application.properties)
+│   └── resources/                    # Configuration files (application.com.igirerwanda.application_portal_backend.resources.properties)
 │
 ├── src/test/java/com/igirerwanda/application_portal_backend/
 │   ├── controller/                   # Controller tests

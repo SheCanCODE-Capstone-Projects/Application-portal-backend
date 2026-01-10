@@ -13,4 +13,6 @@ public interface UserService {
 
     UserResponseDto getCurrentUserProfile();
     void applyToCohort(Long cohortId);
+
+    List<UserResponseDto> getAllUsersDetailed();
 }

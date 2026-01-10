@@ -151,14 +151,14 @@ Provides structured error responses for:
 ## Configuration
 
 ### Email Configuration
-Add to `application.properties`:
-```properties
+Add to `application.com.igirerwanda.application_portal_backend.resources.properties`:
+```com.igirerwanda.application_portal_backend.resources.properties
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
 spring.mail.username=${EMAIL_USERNAME}
 spring.mail.password=${EMAIL_PASSWORD}
-spring.mail.properties.mail.smtp.auth=true
-spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.com.igirerwanda.application_portal_backend.resources.properties.mail.smtp.auth=true
+spring.mail.com.igirerwanda.application_portal_backend.resources.properties.mail.smtp.starttls.enable=true
 ```
 
 ### WebSocket Configuration

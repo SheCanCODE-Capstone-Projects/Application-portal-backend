@@ -1,15 +1,16 @@
+
+version: '3.8'
+
 services:
   postgres:
     image: postgres:15
-    container_name: application-portal-postgres
-    env_file:
-      - .env
+    container_name: portal-prod-db
+    restart: unless-stopped
+    env_file: .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db_init:/docker-entrypoint-initdb.d
@@ -18,30 +19,36 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
     networks:
       - app-network
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: application-portal-backend
+    image: ${DOCKER_IMAGE_NAME}:latest
+    container_name: portal-backend
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
-    env_file:
-      - .env
+    env_file: .env
     environment:
+      # Overriding properties to force Docker Networking
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_PROFILES_ACTIVE: docker
+
+      # Security & Config
+      JWT_SECRET: ${SECRET_KEY}
+      APP_ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_PASSWORD}
+
+      # Google OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+
+      # Email
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
     ports:
       - "8085:${BACKEND_PORT}"
-    volumes:
-      - ./logs:/app/logs
-    restart: unless-stopped
     networks:
       - app-network
 

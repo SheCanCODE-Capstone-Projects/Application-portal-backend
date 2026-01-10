@@ -57,7 +57,7 @@ docker exec -it application-portal-postgres psql -U postgres -d application_port
 ## Development Workflow
 
 ### Local Development (without Docker)
-Update application.properties to use `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` from .env
+Update application.com.igirerwanda.application_portal_backend.resources.properties to use `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` from .env
 
 ### Docker Development
 Services automatically use `POSTGRES_*` variables and Docker networking
