@@ -21,9 +21,6 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build Application (Skip Tests)
-        run: mvn clean package -DskipTests
-
       - name: Run Application (Startup Check)
         run: |
           SPRING_PROFILES_ACTIVE=ci java -jar target/*.jar &
