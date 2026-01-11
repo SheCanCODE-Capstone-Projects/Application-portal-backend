@@ -86,7 +86,7 @@ public class RegistrationService {
         EmailVerificationToken token = tokenRepo.findByToken(tokenStr)
                 .orElseThrow(() -> new ValidationException("Invalid or expired verification token"));
 
-        // SECURITY FIX: Check if token is expired
+
         if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
             tokenRepo.delete(token);
             throw new ValidationException("Verification token has expired");
@@ -97,7 +97,6 @@ public class RegistrationService {
         registerRepo.save(register);
 
         User user = userPromotionService.promote(register);
-
 
         tokenRepo.delete(token);
 

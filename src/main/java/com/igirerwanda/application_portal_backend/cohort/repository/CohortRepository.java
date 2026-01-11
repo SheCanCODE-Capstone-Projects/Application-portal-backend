@@ -15,4 +15,6 @@ public interface CohortRepository extends JpaRepository<Cohort, Long> {
 
     @EntityGraph(attributePaths = {"requirements", "rules"})
     Optional<Cohort> findById(Long id);
+
+    List<Cohort> findByIsOpenTrue();
 }
