@@ -1,4 +1,4 @@
-name: Docker CI/CD Pipeline
+name: Application Portal CI/CD Pipeline
 
 on:
   push:
@@ -20,6 +20,8 @@ jobs:
           POSTGRES_DB=application_portal_db
           POSTGRES_USER=postgres
           POSTGRES_PASSWORD=secure_ci_password
+          POSTGRES_HOST=portal-prod-db
+          POSTGRES_PORT=5432
           BACKEND_PORT=8080
           JWT_SECRET=ci_jwt_secret_key_12345
           APP_ADMIN_BOOTSTRAP_PASSWORD=admin123
@@ -51,37 +53,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Start Docker containers
-        run: docker compose up -d
-
-      - name: Wait for backend health
-        run: |
-          echo "Waiting for backend container to be healthy..."
-          for i in {1..30}; do
-            STATUS=$(docker inspect \
-              --format='{{.State.Health.Status}}' portal-backend 2>/dev/null || echo "starting")
-            echo "Backend health: $STATUS"
-            if [ "$STATUS" = "healthy" ]; then
-              echo "Backend is healthy"
-              exit 0
-            fi
-            if [ "$STATUS" = "unhealthy" ]; then
-              echo "Backend is unhealthy"
-              docker logs portal-backend
-              exit 1
-            fi
-            sleep 5
-          done
-          echo "Backend did not become healthy in time"
-          docker logs portal-backend
-          exit 1
-
-      - name: Docker status
-        if: always()
-        run: docker compose ps
-
-      - name: Deploy to Production
-        if: github.ref == 'refs/heads/main'
+      - name: Deploy to production with rollback
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -90,6 +62,38 @@ jobs:
           script: |
             set -e
             cd /app/application-portal
+
+            # Save timestamp for backup
+            TIMESTAMP=$(date +%Y%m%d%H%M)
+
+            # Backup current running container
+            echo "Backing up current backend..."
+            docker commit portal-backend portal-backend:backup_$TIMESTAMP
+
+            # Pull new image and deploy
+            echo "Pulling latest backend image..."
             docker compose pull backend
             docker compose up -d --remove-orphans
-            docker image prune -f
+
+            # Wait for backend health
+            echo "Waiting for backend to become healthy..."
+            for i in {1..30}; do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' portal-backend 2>/dev/null || echo "starting")
+              echo "Backend health: $STATUS"
+              if [ "$STATUS" = "healthy" ]; then
+                echo "Deployment successful!"
+                exit 0
+              fi
+              if [ "$STATUS" = "unhealthy" ]; then
+                echo "Deployment failed, rolling back..."
+                docker compose down
+                docker run -d --name portal-backend portal-backend:backup_$TIMESTAMP
+                exit 1
+              fi
+              sleep 5
+            done
+
+            echo "Backend did not become healthy in time, rolling back..."
+            docker compose down
+            docker run -d --name portal-backend portal-backend:backup_$TIMESTAMP
+            exit 1

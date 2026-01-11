@@ -53,7 +53,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Deploy to production
+      - name: Deploy to production with rollback
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -63,9 +63,12 @@ jobs:
             set -e
             cd /app/application-portal
 
-            # Backup current containers
-            echo "Backing up current containers..."
-            docker tag portal-backend portal-backend:backup_$(date +%Y%m%d%H%M)
+            # Save timestamp for backup
+            TIMESTAMP=$(date +%Y%m%d%H%M)
+
+            # Backup current running container
+            echo "Backing up current backend..."
+            docker commit portal-backend portal-backend:backup_$TIMESTAMP
 
             # Pull new image and deploy
             echo "Pulling latest backend image..."
@@ -83,16 +86,14 @@ jobs:
               fi
               if [ "$STATUS" = "unhealthy" ]; then
                 echo "Deployment failed, rolling back..."
-                docker stop portal-backend
-                docker rm portal-backend
-                docker run -d --name portal-backend portal-backend:backup_$(date +%Y%m%d%H%M)
+                docker compose down
+                docker run -d --name portal-backend portal-backend:backup_$TIMESTAMP
                 exit 1
               fi
               sleep 5
             done
 
             echo "Backend did not become healthy in time, rolling back..."
-            docker stop portal-backend
-            docker rm portal-backend
-            docker run -d --name portal-backend portal-backend:backup_$(date +%Y%m%d%H%M)
+            docker compose down
+            docker run -d --name portal-backend portal-backend:backup_$TIMESTAMP
             exit 1
