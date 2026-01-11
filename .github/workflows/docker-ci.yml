@@ -64,6 +64,7 @@ jobs:
           docker compose logs backend
           exit 1
 
+
       - name: Docker status
         if: always()
         run: docker compose ps

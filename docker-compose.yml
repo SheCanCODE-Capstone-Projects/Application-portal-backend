@@ -22,6 +22,7 @@ services:
     networks:
       - app-network
 
+
   backend:
     image: ${DOCKER_IMAGE_NAME}:latest
     container_name: portal-backend
@@ -51,6 +52,13 @@ services:
       - "8085:${BACKEND_PORT}"
     networks:
       - app-network
+
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
 networks:
   app-network:
