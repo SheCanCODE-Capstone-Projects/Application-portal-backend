@@ -1,13 +1,13 @@
-name: Docker CI
+name: Docker CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ "main", "develop" ]
 
 jobs:
-  docker-ci:
+  docker-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,45 +30,66 @@ jobs:
           LOGGING_LEVEL_COM_IGIRERWANDA=INFO
           EOF
 
-      - name: Build Docker images
-        run: docker compose build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Start containers
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/application-portal-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/application-portal-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start Docker containers
         run: docker compose up -d
 
       - name: Wait for backend health
         run: |
-          echo "Waiting for backend container to become healthy..."
-
+          echo "Waiting for backend container to be healthy..."
           for i in {1..30}; do
             STATUS=$(docker inspect \
-              --format='{{.State.Health.Status}}' backend 2>/dev/null || echo "starting")
-
+              --format='{{.State.Health.Status}}' portal-backend 2>/dev/null || echo "starting")
             echo "Backend health: $STATUS"
-
             if [ "$STATUS" = "healthy" ]; then
               echo "Backend is healthy"
               exit 0
             fi
-
             if [ "$STATUS" = "unhealthy" ]; then
               echo "Backend is unhealthy"
-              docker compose logs backend
+              docker logs portal-backend
               exit 1
             fi
-
             sleep 5
           done
-
           echo "Backend did not become healthy in time"
-          docker compose logs backend
+          docker logs portal-backend
           exit 1
-
 
       - name: Docker status
         if: always()
         run: docker compose ps
 
-      - name: Tear down containers
-        if: always()
-        run: docker compose down -v
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/main'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd /app/application-portal
+            docker compose pull backend
+            docker compose up -d --remove-orphans
+            docker image prune -f
