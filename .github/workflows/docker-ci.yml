@@ -1,0 +1,73 @@
+name: Docker CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  docker-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file for Docker
+        run: |
+          cat <<EOF > .env
+          POSTGRES_DB=application_portal_db
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=secure_ci_password
+          BACKEND_PORT=8080
+          JWT_SECRET=ci_jwt_secret_key_12345
+          APP_ADMIN_BOOTSTRAP_PASSWORD=admin123
+          GOOGLE_CLIENT_ID=dummy
+          GOOGLE_CLIENT_SECRET=dummy
+          SPRING_MAIL_USERNAME=dummy
+          SPRING_MAIL_PASSWORD=dummy
+          LOGGING_LEVEL_COM_IGIRERWANDA=INFO
+          EOF
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Start containers
+        run: docker compose up -d
+
+      - name: Wait for backend health
+        run: |
+          echo "Waiting for backend container to become healthy..."
+
+          for i in {1..30}; do
+            STATUS=$(docker inspect \
+              --format='{{.State.Health.Status}}' backend 2>/dev/null || echo "starting")
+
+            echo "Backend health: $STATUS"
+
+            if [ "$STATUS" = "healthy" ]; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+
+            if [ "$STATUS" = "unhealthy" ]; then
+              echo "Backend is unhealthy"
+              docker compose logs backend
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+          echo "Backend did not become healthy in time"
+          docker compose logs backend
+          exit 1
+
+      - name: Docker status
+        if: always()
+        run: docker compose ps
+
+      - name: Tear down containers
+        if: always()
+        run: docker compose down -v
