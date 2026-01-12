@@ -1,7 +1,9 @@
 package com.igirerwanda.application_portal_backend.application.dto;
 
+import com.igirerwanda.application_portal_backend.common.enums.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -21,6 +23,13 @@ public class PersonalInfoDto {
     @NotBlank(message = "Phone is required")
     @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number format")
     private String phone;
+    
+    @NotNull(message = "Gender is required")
+    private Gender gender;
+    
+    @NotBlank(message = "Nationality is required")
+    @Size(min = 2, max = 100, message = "Nationality must be between 2 and 100 characters")
+    private String nationality;
     
     private String maritalStatus;
     private String socialLinks;

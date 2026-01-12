@@ -143,6 +143,7 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
         dto.setUserId(app.getUser().getId());
         dto.setStatus(app.getStatus());
         dto.setSystemRejected(app.isSystemRejected());
+        dto.setSystemRejectionReason(app.getSystemRejectionReason());
         dto.setSubmittedAt(app.getSubmittedAt());
         dto.setCreatedAt(app.getCreatedAt());
 
@@ -157,6 +158,8 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
             piDto.setFullName(pi.getFullName());
             piDto.setEmail(pi.getEmail());
             piDto.setPhone(pi.getPhone());
+            piDto.setGender(pi.getGender());
+            piDto.setNationality(pi.getNationality());
             piDto.setMaritalStatus(pi.getMaritalStatus());
             piDto.setSocialLinks(pi.getSocialLinks());
             piDto.setAdditionalInformation(pi.getAdditionalInformation());
@@ -165,6 +168,7 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
             if (pi.getEducationOccupation() != null) {
                 EducationOccupation edu = pi.getEducationOccupation();
                 EducationDto eduDto = new EducationDto();
+                eduDto.setHighestEducationLevel(edu.getHighestEducationLevel());
                 eduDto.setHighestEducation(edu.getHighestEducation());
                 eduDto.setOccupation(edu.getOccupation());
                 eduDto.setEmploymentStatus(edu.getEmploymentStatus());

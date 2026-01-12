@@ -2,6 +2,7 @@ package com.igirerwanda.application_portal_backend.application.controller;
 
 import com.igirerwanda.application_portal_backend.application.dto.*;
 import com.igirerwanda.application_portal_backend.application.service.UserApplicationService;
+import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.common.util.ApiResponse;
 import com.igirerwanda.application_portal_backend.common.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -105,13 +106,16 @@ public class UserApplicationController {
     }
 
     @PutMapping("/{id}/submit")
-    @Operation(summary = "Submit Application", description = "Finalizes the application. Changes status to SUBMITTED.")
-    public ResponseEntity<ApiResponse<ApplicationDto>> submit(@PathVariable Long id) {
+    @Operation(summary = "Submit Application", description = "Finalizes the application. Performs automatic system rejection evaluation. Changes status to SUBMITTED or SYSTEM_REJECTED.")
+    public ResponseEntity<ApiResponse<ApplicationSubmissionResponseDto>> submit(@PathVariable Long id) {
         Long userId = jwtUtil.getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.success(
-                "Application submitted successfully",
-                userApplicationService.submitApplication(id, userId)
-        ));
+        ApplicationSubmissionResponseDto response = userApplicationService.submitApplication(id, userId);
+        
+        String message = response.getStatus() == ApplicationStatus.SYSTEM_REJECTED 
+            ? "Application automatically rejected: " + response.getRejectionReason()
+            : "Application submitted successfully";
+            
+        return ResponseEntity.ok(ApiResponse.success(message, response));
     }
 
     @GetMapping("/{id}/progress")

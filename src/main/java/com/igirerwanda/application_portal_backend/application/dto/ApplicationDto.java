@@ -16,6 +16,7 @@ public class ApplicationDto {
     private String cohortName;
     private ApplicationStatus status;
     private boolean isSystemRejected;
+    private String systemRejectionReason;
     private LocalDateTime submittedAt;
     private LocalDateTime createdAt;
     private PersonalInfoDto personalInfo;

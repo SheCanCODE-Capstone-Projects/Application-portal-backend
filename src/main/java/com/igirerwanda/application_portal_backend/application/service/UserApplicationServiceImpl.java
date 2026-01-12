@@ -34,8 +34,8 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     private final DocumentRepository documentRepository;
     private final EmergencyContactRepository emergencyContactRepository;
 
-    // Injected validation service
     private final ApplicationValidationService applicationValidationService;
+    private final SystemRejectionService systemRejectionService;
 
     @Override
     public ApplicationDto startApplicationForUser(Long registerId) {
@@ -66,6 +66,8 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         pi.setFullName(dto.getFullName());
         pi.setEmail(dto.getEmail());
         pi.setPhone(dto.getPhone());
+        pi.setGender(dto.getGender());
+        pi.setNationality(dto.getNationality());
         pi.setMaritalStatus(dto.getMaritalStatus());
         pi.setSocialLinks(dto.getSocialLinks());
         pi.setAdditionalInformation(dto.getAdditionalInformation());
@@ -81,6 +83,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
         EducationOccupation edu = getOrCreate(pi::getEducationOccupation, EducationOccupation::new);
         edu.setPersonalInformation(pi);
+        edu.setHighestEducationLevel(dto.getHighestEducationLevel());
         edu.setHighestEducation(dto.getHighestEducation());
         edu.setOccupation(dto.getOccupation());
         edu.setEmploymentStatus(dto.getEmploymentStatus());
@@ -185,15 +188,31 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     }
 
     @Override
-    public ApplicationDto submitApplication(Long appId, Long registerId) {
+    public ApplicationSubmissionResponseDto submitApplication(Long appId, Long registerId) {
         Application app = getOwnedApplication(appId, registerId);
 
-        // Validated submission logic
+        // Validate submission requirements
         applicationValidationService.validateForSubmission(app);
 
+        // Perform automatic system rejection evaluation
+        systemRejectionService.evaluateAndRejectIfNeeded(app);
+        
+        ApplicationDto applicationDto = mapToDto(app);
+        
+        // If application was system rejected, return system rejection response
+        if (app.getStatus() == ApplicationStatus.SYSTEM_REJECTED) {
+            return ApplicationSubmissionResponseDto.systemRejected(
+                app.getSystemRejectionReason(), 
+                applicationDto
+            );
+        }
+        
+        // If not rejected, proceed with normal submission
         app.setStatus(ApplicationStatus.SUBMITTED);
         app.setSubmittedAt(LocalDateTime.now());
-        return mapToDto(applicationRepository.save(app));
+        applicationRepository.save(app);
+        
+        return ApplicationSubmissionResponseDto.submitted(mapToDto(app));
     }
 
     // FIX: Method signature now matches interface (includes userId)
@@ -260,6 +279,8 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         dto.setId(app.getId());
         dto.setUserId(app.getUser().getId());
         dto.setStatus(app.getStatus());
+        dto.setSystemRejected(app.isSystemRejected());
+        dto.setSystemRejectionReason(app.getSystemRejectionReason());
 
         // Fix: Null safe check for cohort
         if (app.getCohort() != null) {
@@ -276,6 +297,8 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             piDto.setFullName(pi.getFullName());
             piDto.setEmail(pi.getEmail());
             piDto.setPhone(pi.getPhone());
+            piDto.setGender(pi.getGender());
+            piDto.setNationality(pi.getNationality());
             piDto.setMaritalStatus(pi.getMaritalStatus());
             piDto.setSocialLinks(pi.getSocialLinks());
             piDto.setAdditionalInformation(pi.getAdditionalInformation());
@@ -284,6 +307,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             if (pi.getEducationOccupation() != null) {
                 EducationOccupation edu = pi.getEducationOccupation();
                 EducationDto eduDto = new EducationDto();
+                eduDto.setHighestEducationLevel(edu.getHighestEducationLevel());
                 eduDto.setHighestEducation(edu.getHighestEducation());
                 eduDto.setOccupation(edu.getOccupation());
                 eduDto.setEmploymentStatus(edu.getEmploymentStatus());
