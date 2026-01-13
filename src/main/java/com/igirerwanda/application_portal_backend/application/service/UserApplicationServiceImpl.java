@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import com.igirerwanda.application_portal_backend.notification.service.WebSocketService;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +38,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
     // Injected validation service
     private final ApplicationValidationService applicationValidationService;
+    private final WebSocketService webSocketService;
 
     @Override
     public ApplicationDto startApplicationForUser(Long registerId) {
@@ -46,13 +49,24 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             throw new IllegalStateException("Please select a cohort before starting an application.");
         }
 
+        // Single active application per user - return existing DRAFT if found
         Application app = applicationRepository.findByUserIdAndCohortId(user.getId(), cohort.getId())
                 .orElseGet(() -> {
                     Application newApp = new Application();
                     newApp.setUser(user);
                     newApp.setCohort(cohort);
                     newApp.setStatus(ApplicationStatus.DRAFT);
-                    return applicationRepository.save(newApp);
+                    Application savedApp = applicationRepository.save(newApp);
+                    
+                    // Broadcast application started event
+                    webSocketService.broadcastApplicationUpdate(Map.of(
+                        "event", "APPLICATION_STARTED",
+                        "applicationId", savedApp.getId(),
+                        "userId", user.getId(),
+                        "status", ApplicationStatus.DRAFT
+                    ));
+                    
+                    return savedApp;
                 });
 
         return mapToDto(app);
@@ -71,6 +85,10 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         pi.setAdditionalInformation(dto.getAdditionalInformation());
 
         personalInfoRepository.save(pi);
+        
+        // Broadcast step update event
+        broadcastStepUpdate(application, "PERSONAL_INFO");
+        
         return mapToDto(application);
     }
 
@@ -87,6 +105,10 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         edu.setYearsExperience(dto.getYearsExperience());
 
         educationalRepository.save(edu);
+        
+        // Broadcast step update event
+        broadcastStepUpdate(application, "EDUCATION");
+        
         return mapToDto(application);
     }
 
@@ -102,6 +124,10 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         m.setPreferredCourse(dto.getPreferredCourse());
 
         motivationAnswerRepository.save(m);
+        
+        // Broadcast step update event
+        broadcastStepUpdate(application, "MOTIVATION");
+        
         return mapToDto(application);
     }
 
@@ -114,9 +140,13 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         d.setPersonalInformation(pi);
         d.setHasDisability(dto.getHasDisability());
         d.setDisabilityType(dto.getDisabilityType());
-        d.setDisabilityDescription(d.getDisabilityDescription());
+        d.setDisabilityDescription(dto.getDisabilityDescription());
 
         disabilityRepository.save(d);
+        
+        // Broadcast step update event
+        broadcastStepUpdate(application, "DISABILITY");
+        
         return mapToDto(application);
     }
 
@@ -132,6 +162,10 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         v.setDescription(dto.getDescription());
 
         vulnerabilityRepository.save(v);
+        
+        // Broadcast step update event
+        broadcastStepUpdate(application, "VULNERABILITY");
+        
         return mapToDto(application);
     }
 
@@ -152,6 +186,10 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         }).collect(Collectors.toList());
 
         documentRepository.saveAll(documents);
+        
+        // Broadcast step update event
+        broadcastStepUpdate(application, "DOCUMENTS");
+        
         return mapToDto(application);
     }
 
@@ -173,6 +211,10 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         }).collect(Collectors.toList());
 
         emergencyContactRepository.saveAll(contacts);
+        
+        // Broadcast step update event
+        broadcastStepUpdate(application, "EMERGENCY_CONTACTS");
+        
         return mapToDto(application);
     }
 
@@ -193,7 +235,26 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
         app.setStatus(ApplicationStatus.SUBMITTED);
         app.setSubmittedAt(LocalDateTime.now());
-        return mapToDto(applicationRepository.save(app));
+        Application savedApp = applicationRepository.save(app);
+        
+        // Broadcast application submitted event
+        webSocketService.broadcastApplicationUpdate(Map.of(
+            "event", "APPLICATION_SUBMITTED",
+            "applicationId", savedApp.getId(),
+            "userId", savedApp.getUser().getId(),
+            "status", ApplicationStatus.SUBMITTED,
+            "submittedAt", savedApp.getSubmittedAt()
+        ));
+        
+        // Notify admin dashboard
+        webSocketService.broadcastToAdmin("applications", Map.of(
+            "event", "NEW_SUBMISSION",
+            "applicationId", savedApp.getId(),
+            "applicantName", savedApp.getPersonalInformation() != null ? 
+                savedApp.getPersonalInformation().getFullName() : "Unknown"
+        ));
+        
+        return mapToDto(savedApp);
     }
 
     // FIX: Method signature now matches interface (includes userId)
@@ -236,6 +297,12 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         if (!app.getUser().getRegister().getId().equals(registerId)) {
             throw new AccessDeniedException("Access denied: You do not own this application.");
         }
+        
+        // Prevent editing submitted applications
+        if (app.getStatus() != ApplicationStatus.DRAFT) {
+            throw new ValidationException("Cannot edit application with status: " + app.getStatus() + ". Only DRAFT applications can be edited.");
+        }
+        
         return app;
     }
 
@@ -253,6 +320,30 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     private <T> T getOrCreate(java.util.function.Supplier<T> getter, java.util.function.Supplier<T> constructor) {
         T value = getter.get();
         return (value != null) ? value : constructor.get();
+    }
+    
+    private void broadcastStepUpdate(Application application, String stepName) {
+        double progress = calculateCompletionPercentage(application.getId(), application.getUser().getRegister().getId());
+        
+        // Broadcast to user
+        webSocketService.broadcastApplicationProgress(
+            application.getUser().getId().toString(),
+            Map.of(
+                "event", "STEP_UPDATED",
+                "applicationId", application.getId(),
+                "step", stepName,
+                "progress", progress
+            )
+        );
+        
+        // Broadcast to admin dashboard
+        webSocketService.broadcastToAdmin("progress", Map.of(
+            "event", "APPLICATION_PROGRESS",
+            "applicationId", application.getId(),
+            "step", stepName,
+            "progress", progress,
+            "userId", application.getUser().getId()
+        ));
     }
 
     private ApplicationDto mapToDto(Application app) {
