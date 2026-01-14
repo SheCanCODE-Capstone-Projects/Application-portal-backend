@@ -1,6 +1,5 @@
 package com.igirerwanda.application_portal_backend.common.exception;
 
-import com.igirerwanda.application_portal_backend.admin.service.DuplicateResourceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
