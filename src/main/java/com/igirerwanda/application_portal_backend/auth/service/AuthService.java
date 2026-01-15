@@ -1,10 +1,11 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
 
-import com.igirerwanda.application_portal_backend.auth.dto.LoginRequest;
-import com.igirerwanda.application_portal_backend.auth.dto.LoginResponse;
-import com.igirerwanda.application_portal_backend.auth.dto.RegisterRequest;
-import com.igirerwanda.application_portal_backend.auth.dto.VerifyEmailRequest;
+import com.igirerwanda.application_portal_backend.auth.dto.*;
+import com.igirerwanda.application_portal_backend.auth.entity.RefreshToken;
+import com.igirerwanda.application_portal_backend.common.exception.ValidationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -16,16 +17,22 @@ public class AuthService {
     private final EmailVerificationService emailVerificationService;
     private final LoginService loginService;
     private final PasswordResetService passwordResetService;
+    private final RefreshTokenService refreshTokenService;
+    
+    @Value("${jwt.access.token.expiration:900000}")
+    private long accessTokenExpiration;
 
     public AuthService(
             RegistrationService registrationService,
             EmailVerificationService emailVerificationService,
             LoginService loginService,
-            PasswordResetService passwordResetService) {
+            PasswordResetService passwordResetService,
+            RefreshTokenService refreshTokenService) {
         this.registrationService = registrationService;
         this.emailVerificationService = emailVerificationService;
         this.loginService = loginService;
         this.passwordResetService = passwordResetService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public Map<String, String> register(RegisterRequest request) {
@@ -50,6 +57,28 @@ public class AuthService {
 
     public Map<String, String> resendVerification(String email) {
         return emailVerificationService.resendVerification(email);
+    }
+    
+    public TokenRefreshResponse refreshToken(String refreshToken) {
+        RefreshToken token = refreshTokenService.findByToken(refreshToken)
+                .orElseThrow(() -> new ValidationException("Invalid refresh token"));
+        
+        token = refreshTokenService.verifyExpiration(token);
+        
+        // Generate new access token
+        String newAccessToken = loginService.generateAccessToken(token.getUser());
+        
+        // Optionally rotate refresh token
+        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(token.getUser());
+        
+        return new TokenRefreshResponse(newAccessToken, newRefreshToken.getToken(), accessTokenExpiration);
+    }
+    
+    public void logout(String refreshToken) {
+        RefreshToken token = refreshTokenService.findByToken(refreshToken)
+                .orElseThrow(() -> new ValidationException("Invalid refresh token"));
+        
+        refreshTokenService.revokeToken(token);
     }
 
 }

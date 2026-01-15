@@ -27,8 +27,7 @@ public class Register {
     @Column(unique = true)
     private String googleId;
 
-    @Column(unique = true)
-    private String username;
+    private String username; // Removed unique constraint
 
     @Column(nullable = true)
     private String password;

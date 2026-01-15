@@ -11,6 +11,7 @@ import com.igirerwanda.application_portal_backend.common.enums.AuthProvider;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
+import com.igirerwanda.application_portal_backend.notification.service.WebSocketEventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,9 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
-import java.util.List;
 
 
 @Service
@@ -36,6 +36,9 @@ public class AdminServiceImpl implements AdminService {
     
     @Autowired
     private RegisterRepository registerRepository;
+    
+    @Autowired
+    private WebSocketEventService webSocketEventService;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -70,6 +73,14 @@ public class AdminServiceImpl implements AdminService {
         
         // Log admin activity with the saved admin
         logAdminActivityWithAdmin("CREATED_ADMIN", savedAdmin, "Created new admin: " + savedAdmin.getEmail());
+        
+        // Broadcast admin creation to other admins
+        webSocketEventService.broadcastToAdmins("ADMIN_CREATED", Map.of(
+            "id", savedAdmin.getId(),
+            "name", savedAdmin.getName(),
+            "email", savedAdmin.getEmail(),
+            "role", savedAdmin.getRole().toString()
+        ));
         
         return mapToAdminResponseDto(savedAdmin);
     }

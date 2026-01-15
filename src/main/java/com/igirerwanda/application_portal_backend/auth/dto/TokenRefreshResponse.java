@@ -1,22 +1,19 @@
 package com.igirerwanda.application_portal_backend.auth.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
-public class LoginResponse {
+public class TokenRefreshResponse {
     private String accessToken;
     private String refreshToken;
     private String tokenType = "Bearer";
     private long expiresIn;
     
-    public LoginResponse(String accessToken, String refreshToken, long expiresIn) {
+    public TokenRefreshResponse(String accessToken, String refreshToken, long expiresIn) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.expiresIn = expiresIn;
     }
 }
-
