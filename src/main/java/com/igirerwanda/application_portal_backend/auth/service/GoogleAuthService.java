@@ -62,4 +62,9 @@ public class GoogleAuthService {
         
         return new LoginResponse(accessToken, refreshToken.getToken(), accessTokenExpiration);
     }
+    
+    public String handleGoogleLogin(String email, String googleId, String name) {
+        LoginResponse response = handleGoogleAuth(email, googleId, name);
+        return response.getAccessToken();
+    }
 }
