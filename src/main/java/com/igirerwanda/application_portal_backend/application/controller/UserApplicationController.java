@@ -26,7 +26,8 @@ public class UserApplicationController {
 
 
     @PostMapping("/start")
-    @Operation(summary = "Initialize Application", description = "Creates a DRAFT application for the user's selected cohort.")
+    @Operation(summary = "Initialize Application", 
+               description = "Creates a DRAFT application for the user's selected cohort. Returns existing draft if one already exists.")
     public ResponseEntity<ApiResponse<ApplicationDto>> startApplication() {
         Long userId = jwtUtil.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(
@@ -36,6 +37,8 @@ public class UserApplicationController {
     }
 
     @GetMapping("/my-application")
+    @Operation(summary = "Get My Application", 
+               description = "Retrieves the current application with all saved step data for progress restoration.")
     public ResponseEntity<ApiResponse<ApplicationDto>> getMyApplication() {
         Long userId = jwtUtil.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(
@@ -45,43 +48,59 @@ public class UserApplicationController {
     }
 
     @PutMapping("/{id}/personal-info")
+    @Operation(summary = "Save Personal Information", 
+               description = "Updates personal information step. Only works for DRAFT applications. Overwrites previous data.")
     public ResponseEntity<ApiResponse<ApplicationDto>> savePersonalInfo(
             @PathVariable Long id, @Valid @RequestBody PersonalInfoDto dto) {
         Long userId = jwtUtil.getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.success("Saved", userApplicationService.savePersonalInfo(id, userId, dto)));
+        return ResponseEntity.ok(ApiResponse.success("Personal information saved", 
+                userApplicationService.savePersonalInfo(id, userId, dto)));
     }
 
     @PutMapping("/{id}/education")
+    @Operation(summary = "Save Education Information", 
+               description = "Updates education step. Only works for DRAFT applications. Overwrites previous data.")
     public ResponseEntity<ApiResponse<ApplicationDto>> saveEducation(
             @PathVariable Long id, @Valid @RequestBody EducationDto dto) {
         Long userId = jwtUtil.getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.success("Saved", userApplicationService.saveEducation(id, userId, dto)));
+        return ResponseEntity.ok(ApiResponse.success("Education information saved", 
+                userApplicationService.saveEducation(id, userId, dto)));
     }
 
     @PutMapping("/{id}/motivation")
+    @Operation(summary = "Save Motivation Answers", 
+               description = "Updates motivation step. Only works for DRAFT applications. Overwrites previous data.")
     public ResponseEntity<ApiResponse<ApplicationDto>> saveMotivation(
             @PathVariable Long id, @Valid @RequestBody MotivationDto dto) {
         Long userId = jwtUtil.getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.success("Saved", userApplicationService.saveMotivation(id, userId, dto)));
+        return ResponseEntity.ok(ApiResponse.success("Motivation answers saved", 
+                userApplicationService.saveMotivation(id, userId, dto)));
     }
 
     @PutMapping("/{id}/disability")
+    @Operation(summary = "Save Disability Information", 
+               description = "Updates disability step. Only works for DRAFT applications. Overwrites previous data.")
     public ResponseEntity<ApiResponse<ApplicationDto>> saveDisability(
             @PathVariable Long id, @Valid @RequestBody DisabilityDto dto) {
         Long userId = jwtUtil.getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.success("Saved", userApplicationService.saveDisability(id, userId, dto)));
+        return ResponseEntity.ok(ApiResponse.success("Disability information saved", 
+                userApplicationService.saveDisability(id, userId, dto)));
     }
 
     @PutMapping("/{id}/vulnerability")
+    @Operation(summary = "Save Vulnerability Information", 
+               description = "Updates vulnerability step. Only works for DRAFT applications. Overwrites previous data.")
     public ResponseEntity<ApiResponse<ApplicationDto>> saveVulnerability(
             @PathVariable Long id, @Valid @RequestBody VulnerabilityDto dto) {
         Long userId = jwtUtil.getCurrentUserId();
-        return ResponseEntity.ok(ApiResponse.success("Saved", userApplicationService.saveVulnerability(id, userId, dto)));
+        return ResponseEntity.ok(ApiResponse.success("Vulnerability information saved", 
+                userApplicationService.saveVulnerability(id, userId, dto)));
     }
 
 
     @PutMapping("/{id}/documents")
-    @Operation(summary = "Save Documents", description = "Updates the list of uploaded documents. Replaces existing list.")
+    @Operation(summary = "Save Documents", 
+               description = "Updates the list of uploaded documents. Replaces existing list completely. Only works for DRAFT applications.")
     public ResponseEntity<ApiResponse<ApplicationDto>> saveDocuments(
             @PathVariable Long id,
             @Valid @RequestBody List<DocumentDto> dtos) {
@@ -94,13 +113,14 @@ public class UserApplicationController {
 
 
     @PutMapping("/{id}/emergency-contacts")
-    @Operation(summary = "Save Emergency Contacts", description = "Updates the list of emergency contacts. Replaces existing list.")
+    @Operation(summary = "Save Emergency Contacts", 
+               description = "Updates the list of emergency contacts. Replaces existing list completely. Only works for DRAFT applications.")
     public ResponseEntity<ApiResponse<ApplicationDto>> saveEmergencyContacts(
             @PathVariable Long id,
             @Valid @RequestBody List<EmergencyContactDto> dtos) {
         Long userId = jwtUtil.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(
-                "Contacts saved successfully",
+                "Emergency contacts saved successfully",
                 userApplicationService.saveEmergencyContacts(id, userId, dtos)
         ));
     }
@@ -119,8 +139,9 @@ public class UserApplicationController {
     }
 
     @GetMapping("/{id}/progress")
+    @Operation(summary = "Get Application Progress", 
+               description = "Calculates completion percentage based on completed steps. Updates in real-time.")
     public ResponseEntity<ApiResponse<Map<String, Double>>> getProgress(@PathVariable Long id) {
-
         Long userId = jwtUtil.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(
                 "Progress calculated",
