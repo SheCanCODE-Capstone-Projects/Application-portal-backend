@@ -18,11 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import com.igirerwanda.application_portal_backend.notification.service.WebSocketService;
-
-import javax.swing.text.html.Option;
 
 @Service
 @RequiredArgsConstructor
@@ -50,15 +47,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
         if (cohort == null) {
             throw new IllegalStateException("Please select a cohort before starting an application.");
-        }
-
-        Optional<Application> existingApplication =
-                applicationRepository.findByUserIdAndCohortId(
-                        user.getId(),
-                        cohort.getId()
-                );
-        if (existingApplication.isPresent()) {
-            throw new IllegalStateException("You already have an application in progress.");
         }
 
         // Single active application per user - return existing DRAFT if found
@@ -335,7 +323,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     }
     
     private void broadcastStepUpdate(Application application, String stepName) {
-        double progress = calculateCompletionPercentage(application.getId(), application.getUser().getRegister().getId());
+        double progress = calculateCompletionPercentage(application.getId(), application.getUser().getId());
         
         // Broadcast to user
         webSocketService.broadcastApplicationProgress(

@@ -4,6 +4,7 @@ import com.igirerwanda.application_portal_backend.auth.entity.Register;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class EmailService {
@@ -28,9 +29,10 @@ public class EmailService {
         }
     }
 
-    // Add this for verification emails
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
     public void sendVerificationEmail(Register user, String token) {
-        String verificationLink = "http://localhost:3000/api/auth/verify-email?token=" + token;
+        String verificationLink = frontendBaseUrl + "/api/auth/verify-email?token=" + token;
 
         String subject = "Verify your email address";
         String body = """

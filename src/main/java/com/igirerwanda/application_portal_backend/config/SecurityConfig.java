@@ -3,6 +3,7 @@ package com.igirerwanda.application_portal_backend.config;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod; // Import this
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,6 +18,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -26,28 +28,44 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final Environment environment;
+
+    private List<String> allowedOrigins;
 
     public SecurityConfig(OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
                           OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler,
-                          JwtAuthenticationFilter jwtAuthenticationFilter) {
+                          JwtAuthenticationFilter jwtAuthenticationFilter, Environment environment) {
         this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
         this.oAuth2AuthenticationFailureHandler = oAuth2AuthenticationFailureHandler;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.environment = environment;
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+
         return new BCryptPasswordEncoder();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:*",
-                "https://*.trycloudflare.com",
-                "https://*.ngrok-free.dev"
-        ));
+
+        boolean isDevOrStaging = Arrays.stream(environment.getActiveProfiles())
+                        .anyMatch(p -> p.equalsIgnoreCase("dev") || p.equalsIgnoreCase("staging"));
+
+        if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
+
+            configuration.setAllowedOrigins(allowedOrigins);
+            configuration.setAllowCredentials(true);
+        } else if (isDevOrStaging) {
+
+            configuration.setAllowedOriginPatterns(
+                    List.of("http://localhost:*")
+            );
+            configuration.setAllowCredentials(false);
+        }
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
