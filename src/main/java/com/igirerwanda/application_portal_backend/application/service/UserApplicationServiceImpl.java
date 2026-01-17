@@ -239,24 +239,21 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         // Perform automatic system rejection evaluation
         systemRejectionService.evaluateAndRejectIfNeeded(app);
         
-        ApplicationDto applicationDto = mapToDto(app);
+//        ApplicationDto applicationDto = mapToDto(app);
         
         // If application was system rejected, return system rejection response
         if (app.getStatus() == ApplicationStatus.SYSTEM_REJECTED) {
             return ApplicationSubmissionResponseDto.systemRejected(
                 app.getSystemRejectionReason(), 
-                applicationDto
+                mapToDto(app)
             );
         }
         
         // If not rejected, proceed with normal submission
         app.setStatus(ApplicationStatus.SUBMITTED);
         app.setSubmittedAt(LocalDateTime.now());
-        applicationRepository.save(app);
-        
-        return ApplicationSubmissionResponseDto.submitted(mapToDto(app));
         Application savedApp = applicationRepository.save(app);
-        
+
         // Broadcast application submitted event
         webSocketService.broadcastApplicationUpdate(Map.of(
             "event", "APPLICATION_SUBMITTED",
@@ -273,8 +270,8 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             "applicantName", savedApp.getPersonalInformation() != null ? 
                 savedApp.getPersonalInformation().getFullName() : "Unknown"
         ));
-        
-        return mapToDto(savedApp);
+
+        return ApplicationSubmissionResponseDto.submitted(mapToDto(savedApp));
     }
 
     // FIX: Method signature now matches interface (includes userId)
