@@ -70,7 +70,7 @@ public class RegistrationService {
 
         tokenRepo.save(token);
 
-        String link = "http://localhost:8080/api/v1/auth/verify?token=" + token.getToken();
+        String link = "http://localhost:3000/api/v1/auth/verify?token=" + token.getToken();
         emailService.sendEmail(
                 user.getEmail(),
                 "Verify your account",

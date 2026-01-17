@@ -30,7 +30,7 @@ public class EmailService {
 
     // Add this for verification emails
     public void sendVerificationEmail(Register user, String token) {
-        String verificationLink = "http://localhost:8080/api/auth/verify-email?token=" + token;
+        String verificationLink = "http://localhost:3000/api/auth/verify-email?token=" + token;
 
         String subject = "Verify your email address";
         String body = """

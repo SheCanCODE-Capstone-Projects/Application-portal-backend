@@ -37,11 +37,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Object> handleConflict(IllegalStateException ex, WebRequest request) {
         log.warn("Conflict: {}", ex.getMessage());
+
+        String message = ex.getMessage();
         // Check if it's about editing submitted application
-        if (ex.getMessage().contains("Cannot edit application") || ex.getMessage().contains("Only DRAFT applications")) {
-            return build(HttpStatus.CONFLICT, "Operation not allowed", ex.getMessage(), request.getDescription(false));
+        if (message != null && (message.contains("Cannot edit application") || message.contains("Only DRAFT applications"))) {
+            return build(HttpStatus.CONFLICT, "Operation not allowed", message, request.getDescription(false));
         }
-        return build(HttpStatus.BAD_REQUEST, "Invalid state", ex.getMessage(), request.getDescription(false));
+        return build(HttpStatus.BAD_REQUEST, "Invalid state", message != null ? message : "Invalid state", request.getDescription(false));
     }
 
     @ExceptionHandler(SecurityException.class)
