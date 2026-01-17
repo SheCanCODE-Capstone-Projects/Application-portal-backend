@@ -27,6 +27,7 @@ public class SystemRejectionService {
         if (!meetsRequirements) {
             application.setStatus(ApplicationStatus.SYSTEM_REJECTED);
             application.setSystemRejectionReason(cohortRuleService.getRejectionReason(application, application.getCohort()));
+            application.setSystemRejected(true);
             applicationRepository.save(application);
         }
     }

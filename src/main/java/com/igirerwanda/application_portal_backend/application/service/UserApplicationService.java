@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface UserApplicationService {
     ApplicationDto startApplicationForUser(Long userId);
-    ApplicationDto submitApplication(Long applicationId, Long userId);
+    ApplicationSubmissionResponseDto submitApplication(Long applicationId, Long userId);
     ApplicationDto getApplicationForUser(Long userId);
 
     // Progressive Steps
