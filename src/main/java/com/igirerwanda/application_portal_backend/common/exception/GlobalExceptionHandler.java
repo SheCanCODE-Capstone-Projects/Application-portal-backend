@@ -1,6 +1,5 @@
 package com.igirerwanda.application_portal_backend.common.exception;
 
-import com.igirerwanda.application_portal_backend.admin.service.DuplicateResourceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -33,6 +32,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleBadRequest(RuntimeException ex, WebRequest request) {
         log.warn("Bad request: {}", ex.getMessage());
         return build(HttpStatus.BAD_REQUEST, "Invalid request", ex.getMessage(), request.getDescription(false));
+    }
+    
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Object> handleConflict(IllegalStateException ex, WebRequest request) {
+        log.warn("Conflict: {}", ex.getMessage());
+
+        String message = ex.getMessage();
+        // Check if it's about editing submitted application
+        if (message != null && (message.contains("Cannot edit application") || message.contains("Only DRAFT applications"))) {
+            return build(HttpStatus.CONFLICT, "Operation not allowed", message, request.getDescription(false));
+        }
+        return build(HttpStatus.BAD_REQUEST, "Invalid state", message != null ? message : "Invalid state", request.getDescription(false));
     }
 
     @ExceptionHandler(SecurityException.class)
