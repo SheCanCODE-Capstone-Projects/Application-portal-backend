@@ -1,25 +1,22 @@
 package com.igirerwanda.application_portal_backend.notification.service;
 
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EmailService {
 
-    private final ResendEmailService resendEmailService;
+    private final SmtpEmailService smtpEmailService;
 
-    public EmailService(ResendEmailService resendEmailService) {
-        this.resendEmailService = resendEmailService;
+    public EmailService(SmtpEmailService smtpEmailService) {
+        this.smtpEmailService = smtpEmailService;
     }
 
     public void sendEmail(String to, String subject, String body) {
-        // Convert plain text to HTML
         String htmlBody = "<html><body><pre>" + body + "</pre></body></html>";
-        resendEmailService.sendEmail(to, subject, htmlBody);
+        smtpEmailService.sendEmail(to, subject, htmlBody);
     }
 
-    // Add this for verification emails
     public void sendVerificationEmail(Register user, String token) {
         String verificationLink = "http://localhost:8080/api/auth/verify-email?token=" + token;
 
@@ -38,6 +35,6 @@ public class EmailService {
                 </html>
                 """.formatted(user.getUsername(), verificationLink, verificationLink);
 
-        resendEmailService.sendEmail(user.getEmail(), subject, htmlBody);
+        smtpEmailService.sendEmail(user.getEmail(), subject, htmlBody);
     }
 }
