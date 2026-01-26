@@ -8,6 +8,15 @@ import org.springframework.beans.factory.annotation.Value;
 @Service
 public class EmailService {
 
+    private final SmtpEmailService smtpEmailService;
+
+    public EmailService(SmtpEmailService smtpEmailService) {
+        this.smtpEmailService = smtpEmailService;
+    }
+
+    public void sendEmail(String to, String subject, String body) {
+        String htmlBody = "<html><body><pre>" + body + "</pre></body></html>";
+        smtpEmailService.sendEmail(to, subject, htmlBody);
     private final ResendEmailService resendEmailService;
 
     public EmailService(ResendEmailService resendEmailService) {
@@ -40,6 +49,7 @@ public class EmailService {
                 </html>
                 """.formatted(user.getUsername(), verificationLink, verificationLink);
 
+        smtpEmailService.sendEmail(user.getEmail(), subject, htmlBody);
         resendEmailService.sendEmail(user.getEmail(), subject, htmlBody);
     }
 }
