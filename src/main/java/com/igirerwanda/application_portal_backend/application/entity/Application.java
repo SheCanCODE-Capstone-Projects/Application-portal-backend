@@ -39,7 +39,7 @@ public class Application {
     private Cohort cohort;
 
     @Enumerated(EnumType.STRING)
-    private ApplicationStatus status = ApplicationStatus.PENDING_REVIEW;
+    private ApplicationStatus status = ApplicationStatus.DRAFT;
 
 
     private boolean isSystemRejected = false;

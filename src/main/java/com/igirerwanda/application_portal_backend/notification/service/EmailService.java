@@ -2,6 +2,7 @@ package com.igirerwanda.application_portal_backend.notification.service;
 
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class EmailService {
@@ -17,8 +18,10 @@ public class EmailService {
         smtpEmailService.sendEmail(to, subject, htmlBody);
     }
 
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
     public void sendVerificationEmail(Register user, String token) {
-        String verificationLink = "http://localhost:8080/api/auth/verify-email?token=" + token;
+        String verificationLink = frontendBaseUrl + "/api/auth/verify-email?token=" + token;
 
         String subject = "Verify your email address";
         String htmlBody = """
