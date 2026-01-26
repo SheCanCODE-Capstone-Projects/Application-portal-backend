@@ -1,4 +1,13 @@
 package com.igirerwanda.application_portal_backend.common.enums;
 
-public class EducationalLevel {
+public enum EducationalLevel {
+    PRIMARY,
+    SECONDARY,
+    HIGH_SCHOOL,
+    DIPLOMA,
+    BACHELOR,
+    MASTER,
+    PHD,
+    PROFESSIONAL_CERTIFICATE,
+    OTHER
 }

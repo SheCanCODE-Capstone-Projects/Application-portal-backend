@@ -1,5 +1,6 @@
 package com.igirerwanda.application_portal_backend.application.entity;
 
+import com.igirerwanda.application_portal_backend.common.enums.EducationalLevel;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,7 +23,10 @@ public class EducationOccupation {
     @JoinColumn(name = "personal_information_id")
     private PersonalInformation personalInformation;
 
-    private String highestEducation;
+    @Enumerated(EnumType.STRING)
+    private EducationalLevel highestEducationLevel;
+    
+    private String highestEducation; // Keep for backward compatibility
     private String occupation;
     private String employmentStatus;
     private Integer yearsExperience;
