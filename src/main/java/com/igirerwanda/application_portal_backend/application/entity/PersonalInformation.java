@@ -1,4 +1,5 @@
 package com.igirerwanda.application_portal_backend.application.entity;
+import com.igirerwanda.application_portal_backend.common.enums.Gender;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,6 +29,11 @@ public class PersonalInformation {
     private String fullName;
     private String email;
     private String phone;
+    
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+    
+    private String nationality;
 
     private String maritalStatus;
     private String socialLinks;
