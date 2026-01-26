@@ -9,7 +9,7 @@ import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
 import com.igirerwanda.application_portal_backend.common.exception.ValidationException;
 import com.igirerwanda.application_portal_backend.notification.service.EmailService;
-import com.igirerwanda.application_portal_backend.notification.service.WebSocketService;
+import com.igirerwanda.application_portal_backend.notification.service.WebSocketEventService;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,19 +26,19 @@ public class RegistrationService {
     private final EmailVerificationTokenRepository tokenRepo;
     private final PasswordEncoder encoder;
     private final EmailService emailService;
-    private final WebSocketService webSocketService;
+    private final WebSocketEventService webSocketEventService;
     private final UserPromotionService userPromotionService;
 
     public RegistrationService(RegisterRepository registerRepo,
                                EmailVerificationTokenRepository tokenRepo,
                                PasswordEncoder encoder,
                                EmailService emailService,
-                               WebSocketService webSocketService, UserPromotionService userPromotionService) {
+                               WebSocketEventService webSocketEventService, UserPromotionService userPromotionService) {
         this.registerRepo = registerRepo;
         this.tokenRepo = tokenRepo;
         this.encoder = encoder;
         this.emailService = emailService;
-        this.webSocketService = webSocketService;
+        this.webSocketEventService = webSocketEventService;
         this.userPromotionService = userPromotionService;
     }
 
@@ -48,9 +48,7 @@ public class RegistrationService {
             throw new DuplicateResourceException("Email already registered");
         }
 
-        if (registerRepo.findByUsername(request.getUsername()).isPresent()) {
-            throw new DuplicateResourceException("Username already taken");
-        }
+        // Username uniqueness check removed - multiple users can have same username
 
         Register user = new Register();
         user.setEmail(request.getEmail());
@@ -61,7 +59,12 @@ public class RegistrationService {
 
         registerRepo.save(user);
 
-        webSocketService.broadcastToAdmin("users", user);
+        // Broadcast user registration to admins
+        webSocketEventService.broadcastUserEvent("REGISTERED", Map.of(
+            "email", user.getEmail(),
+            "username", user.getUsername(),
+            "role", user.getRole().toString()
+        ));
 
         EmailVerificationToken token = new EmailVerificationToken();
         token.setToken(UUID.randomUUID().toString());
@@ -97,6 +100,12 @@ public class RegistrationService {
         registerRepo.save(register);
 
         User user = userPromotionService.promote(register);
+
+        // Broadcast user verification to admins
+        webSocketEventService.broadcastUserEvent("VERIFIED", Map.of(
+            "email", register.getEmail(),
+            "username", register.getUsername()
+        ));
 
         tokenRepo.delete(token);
 

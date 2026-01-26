@@ -1,11 +1,14 @@
 package com.igirerwanda.application_portal_backend.auth.service;
 
+import com.igirerwanda.application_portal_backend.auth.dto.LoginResponse;
+import com.igirerwanda.application_portal_backend.auth.entity.RefreshToken;
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
 import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
 import com.igirerwanda.application_portal_backend.common.enums.AuthProvider;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.config.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,18 +19,30 @@ public class GoogleAuthService {
     private final RegisterRepository registerRepository;
     private final JwtService jwtService;
     private final UserPromotionService userPromotionService;
+    private final RefreshTokenService refreshTokenService;
+    
+    @Value("${jwt.access.token.expiration:900000}")
+    private long accessTokenExpiration;
 
     @Transactional
-    public String handleGoogleLogin(String email, String googleId, String name) {
-
+    public LoginResponse handleGoogleAuth(String email, String googleId, String name) {
         Register register = registerRepository.findByEmail(email)
                 .map(existing -> {
-                    if (existing.getProvider() != AuthProvider.GOOGLE) {
+                    // If user exists with different provider, allow Google login
+                    if (existing.getProvider() != AuthProvider.GOOGLE && existing.getProvider() != AuthProvider.LOCAL) {
                         throw new IllegalStateException("Email already registered with another provider");
+                    }
+                    // Update to Google provider if was local
+                    if (existing.getProvider() == AuthProvider.LOCAL) {
+                        existing.setProvider(AuthProvider.GOOGLE);
+                        existing.setGoogleId(googleId);
+                        existing.setVerified(true);
+                        return registerRepository.save(existing);
                     }
                     return existing;
                 })
                 .orElseGet(() -> {
+                    // Create new Google user
                     Register newUser = new Register();
                     newUser.setEmail(email);
                     newUser.setGoogleId(googleId);
@@ -38,9 +53,18 @@ public class GoogleAuthService {
                     return registerRepository.save(newUser);
                 });
 
-        // ✅ CRITICAL: This ensures the record is created in the 'users' table
+        // Ensure user record exists in users table
         userPromotionService.promote(register);
-
-        return jwtService.generateAccessToken(register);
+        
+        // Generate tokens
+        String accessToken = jwtService.generateAccessToken(register);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(register);
+        
+        return new LoginResponse(accessToken, refreshToken.getToken(), accessTokenExpiration);
+    }
+    
+    public String handleGoogleLogin(String email, String googleId, String name) {
+        LoginResponse response = handleGoogleAuth(email, googleId, name);
+        return response.getAccessToken();
     }
 }

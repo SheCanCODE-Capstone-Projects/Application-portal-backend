@@ -1,32 +1,23 @@
 package com.igirerwanda.application_portal_backend.notification.service;
 
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final ResendEmailService resendEmailService;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public EmailService(ResendEmailService resendEmailService) {
+        this.resendEmailService = resendEmailService;
     }
 
     public void sendEmail(String to, String subject, String body) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-            mailSender.send(message);
-
-            System.out.println("Email sent to: " + to);
-        } catch (Exception e) {
-            System.err.println("Failed to send email: " + e.getMessage());
-        }
+        // Convert plain text to HTML
+        String htmlBody = "<html><body><pre>" + body + "</pre></body></html>";
+        resendEmailService.sendEmail(to, subject, htmlBody);
     }
 
     @Value("${app.frontend.base-url}")
@@ -35,18 +26,20 @@ public class EmailService {
         String verificationLink = frontendBaseUrl + "/api/auth/verify-email?token=" + token;
 
         String subject = "Verify your email address";
-        String body = """
-                Hello %s,
+        String htmlBody = """
+                <html>
+                <body>
+                    <h2>Email Verification</h2>
+                    <p>Hello %s,</p>
+                    <p>Please verify your email by clicking the link below:</p>
+                    <p><a href="%s" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
+                    <p>Or copy and paste this link: <br>%s</p>
+                    <p><small>This link will expire in 24 hours.</small></p>
+                    <p><small>If you did not create an account, please ignore this email.</small></p>
+                </body>
+                </html>
+                """.formatted(user.getUsername(), verificationLink, verificationLink);
 
-                Please verify your email by clicking the link below:
-
-                %s
-
-                This link will expire in 24 hours.
-
-                If you did not create an account, please ignore this email.
-                """.formatted(user.getUsername(), verificationLink);
-
-        sendEmail(user.getEmail(), subject, body);
+        resendEmailService.sendEmail(user.getEmail(), subject, htmlBody);
     }
 }

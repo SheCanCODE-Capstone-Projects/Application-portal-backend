@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -23,13 +24,19 @@ public class JwtService {
     private final long ACCESS_TOKEN_EXPIRATION = 15 * 60 * 1000; // 15 mins
     private final long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+    @Value("${jwt.access.token.expiration:900000}")
+    private long accessTokenExpiration;
+    
+    @Value("${jwt.refresh.token.expiration:604800000}")
+    private long refreshTokenExpiration;
+
     public String generateToken(Register user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("userId", user.getId())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -41,7 +48,7 @@ public class JwtService {
                 .claim("userId", user.getId())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -86,7 +93,7 @@ public class JwtService {
                 .claim("role", user.getRole().name())      // authorization
                 .setIssuedAt(new Date())
                 .setExpiration(
-                        new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION)
+                        new Date(System.currentTimeMillis() + accessTokenExpiration)
                 )
                 .signWith(key, SignatureAlgorithm.HS256)   // integrity + security
                 .compact();
