@@ -1,6 +1,7 @@
 package com.igirerwanda.application_portal_backend.notification.service;
 
 import com.igirerwanda.application_portal_backend.auth.entity.Register;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -16,6 +17,16 @@ public class EmailService {
     public void sendEmail(String to, String subject, String body) {
         String htmlBody = "<html><body><pre>" + body + "</pre></body></html>";
         smtpEmailService.sendEmail(to, subject, htmlBody);
+    private final ResendEmailService resendEmailService;
+
+    public EmailService(ResendEmailService resendEmailService) {
+        this.resendEmailService = resendEmailService;
+    }
+
+    public void sendEmail(String to, String subject, String body) {
+        // Convert plain text to HTML
+        String htmlBody = "<html><body><pre>" + body + "</pre></body></html>";
+        resendEmailService.sendEmail(to, subject, htmlBody);
     }
 
     @Value("${app.frontend.base-url}")
@@ -39,5 +50,6 @@ public class EmailService {
                 """.formatted(user.getUsername(), verificationLink, verificationLink);
 
         smtpEmailService.sendEmail(user.getEmail(), subject, htmlBody);
+        resendEmailService.sendEmail(user.getEmail(), subject, htmlBody);
     }
 }
