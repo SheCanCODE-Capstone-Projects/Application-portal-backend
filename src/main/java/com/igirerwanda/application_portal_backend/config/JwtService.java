@@ -12,21 +12,31 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
-import java.util.UUID; // Import UUID
+import java.util.function.Function;
 
 @Service
 public class JwtService {
 
-    // ... (Keep existing SECRET and expiration constants) ...
-    private static final String SECRET = "7a825020606afc3bbb8520a13194b353173f45e4e8afce3f466527f0e671d64347e4b5476c7d4b31bded3955c9b0873f5895f0f85fce47834f851c28255f1465";
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+    private final Key key;
+    private final long accessTokenExpiration;
+    private final long refreshTokenExpiration;
 
-    @Value("${jwt.access.token.expiration:900000}")
-    private long accessTokenExpiration;
+    // Use Constructor Injection to ensure values are read from application.properties
+    public JwtService(
+            @Value("${jwt.secret}") String secretKey,
+            @Value("${jwt.access.token.expiration}") long accessTokenExpiration,
+            @Value("${jwt.refresh.token.expiration}") long refreshTokenExpiration
+    ) {
+        this.accessTokenExpiration = accessTokenExpiration;
+        this.refreshTokenExpiration = refreshTokenExpiration;
 
-    @Value("${jwt.refresh.token.expiration:604800000}")
-    private long refreshTokenExpiration;
 
+        if (secretKey == null || secretKey.length() < 32) {
+            throw new IllegalArgumentException("JWT Secret is too short or null. Make sure JWT_SECRET is set in your .env file and is at least 32 characters long.");
+        }
+
+        this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    }
 
     public String extractUserId(String token) {
         return extractClaim(token, claims -> claims.get("userId", String.class));
@@ -37,31 +47,22 @@ public class JwtService {
     }
 
     public String generateAccessToken(Register user) {
-        return Jwts.builder()
-                .setSubject(user.getEmail())
-                .claim("userId", user.getId().toString()) // Ensure ID is string
-                .claim("role", user.getRole().name())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+        return buildToken(user, accessTokenExpiration);
     }
 
-    // ... (Keep other methods like generateRefreshToken, extractEmail, isTokenValid, extractExpiration, extractClaim, extractAllClaims) ...
-
     public String generateRefreshToken(Register user) {
+        return buildToken(user, refreshTokenExpiration);
+    }
+
+    private String buildToken(Register user, long expiration) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("userId", user.getId().toString())
                 .claim("role", user.getRole().name())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
-    }
-
-    public String extractEmail(String token) {
-        return extractClaim(token, Claims::getSubject);
     }
 
     public boolean isTokenValid(String token) {
@@ -78,6 +79,10 @@ public class JwtService {
         return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
+    public String extractEmail(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
@@ -86,7 +91,7 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public <T> T extractClaim(String token, java.util.function.Function<Claims, T> claimsResolver) {
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }

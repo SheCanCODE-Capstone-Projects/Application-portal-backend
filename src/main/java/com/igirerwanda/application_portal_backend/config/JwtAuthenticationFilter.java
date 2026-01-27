@@ -31,12 +31,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = null;
         String authHeader = request.getHeader("Authorization");
 
-        // 1. Try getting token from Authorization Header
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
         }
 
-        // 2. If no header, try getting token from Cookies
         if (token == null && request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("access_token".equals(cookie.getName())) {
@@ -46,11 +45,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // 3. If token found, validate it
+
         if (token != null) {
-            // Check if context is not already authenticated
+
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Extract email (username) from token
+
                 String email = jwtService.extractEmail(token);
 
                 if (email != null) {
