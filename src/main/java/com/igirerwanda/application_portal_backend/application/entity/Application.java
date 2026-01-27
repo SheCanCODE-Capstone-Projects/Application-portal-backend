@@ -5,29 +5,22 @@ import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
-@Table(
-        name = "applications",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "cohort_id"})
-)
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "applications", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "cohort_id"}))
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 public class Application {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -41,7 +34,6 @@ public class Application {
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status = ApplicationStatus.DRAFT;
 
-
     private boolean isSystemRejected = false;
 
     @Column(nullable = false)
@@ -50,9 +42,7 @@ public class Application {
     @Column(nullable = false)
     private boolean archived = false;
 
-
     private LocalDateTime submittedAt;
-
     private LocalDateTime interviewDate;
 
     @CreationTimestamp

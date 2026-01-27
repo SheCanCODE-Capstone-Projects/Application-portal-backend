@@ -8,13 +8,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface ApplicationRepository extends JpaRepository<Application, Long> {
+public interface ApplicationRepository extends JpaRepository<Application, UUID> {
 
-    Optional<Application> findByUserId(Long userId);
+    Optional<Application> findByUserId(UUID userId);
 
-    Optional<Application> findByUserIdAndCohortId(Long userId, Long cohortId);
+    Optional<Application> findByUserIdAndCohortId(UUID userId, UUID cohortId);
 
     List<Application> findByStatusAndDeletedFalse(ApplicationStatus status);
 
@@ -24,9 +25,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     List<Application> findByDeletedTrue();
 
-
     List<Application> findByDeletedFalseAndArchivedFalse();
 
     @Query("SELECT a FROM Application a WHERE a.id = :id AND a.deleted = false")
-    Optional<Application> findByIdActive(Long id);
+    Optional<Application> findByIdActive(UUID id);
 }

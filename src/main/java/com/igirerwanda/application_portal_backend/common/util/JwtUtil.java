@@ -1,6 +1,7 @@
 package com.igirerwanda.application_portal_backend.common.util;
 
 import com.igirerwanda.application_portal_backend.config.JwtService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,7 @@ public class JwtUtil {
 
     private final JwtService jwtService;
 
-    public Long getCurrentUserId() {
+    public String getCurrentUserId() {
         String token = extractTokenFromRequest();
         if (token != null) {
             return jwtService.extractUserId(token);
@@ -33,10 +34,20 @@ public class JwtUtil {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
+
+            // 1. Check Header
             String authHeader = request.getHeader("Authorization");
-            
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 return authHeader.substring(7);
+            }
+
+            // 2. Check Cookies
+            if (request.getCookies() != null) {
+                for (Cookie cookie : request.getCookies()) {
+                    if ("access_token".equals(cookie.getName())) {
+                        return cookie.getValue();
+                    }
+                }
             }
         }
         return null;

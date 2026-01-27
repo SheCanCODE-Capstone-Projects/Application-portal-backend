@@ -7,6 +7,8 @@ import com.igirerwanda.application_portal_backend.auth.repository.EmailVerificat
 import com.igirerwanda.application_portal_backend.auth.repository.RegisterRepository;
 import com.igirerwanda.application_portal_backend.common.enums.UserRole;
 import com.igirerwanda.application_portal_backend.common.exception.DuplicateResourceException;
+import com.igirerwanda.application_portal_backend.common.exception.ValidationException;
+import com.igirerwanda.application_portal_backend.common.util.PasswordUtil;
 import com.igirerwanda.application_portal_backend.notification.service.EmailService;
 import com.igirerwanda.application_portal_backend.notification.service.WebSocketEventService;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +32,16 @@ public class RegistrationService {
 
     @Transactional
     public Map<String, String> register(RegisterRequest request) {
-
-        if (registerRepo.findByEmail(request.getEmail()).isPresent()) {
-            throw new DuplicateResourceException("Email already registered");
+        // 1. Enhanced Validation
+        if (registerRepo.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException("This email address is already registered.");
         }
 
+        if (!PasswordUtil.isStrongPassword(request.getPassword())) {
+            throw new ValidationException(PasswordUtil.getPasswordRequirements());
+        }
+
+        // 2. Create User
         Register user = new Register();
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
@@ -42,31 +49,32 @@ public class RegistrationService {
         user.setRole(UserRole.APPLICANT);
         user.setVerified(false);
 
-        registerRepo.save(user);
+        Register savedUser = registerRepo.save(user);
 
-        // Broadcast user registration to admins
+
         try {
             webSocketEventService.broadcastUserEvent("REGISTERED", Map.of(
-                    "email", user.getEmail(),
-                    "username", user.getUsername(),
-                    "role", user.getRole().toString()
+                    "id", savedUser.getId().toString(),
+                    "email", savedUser.getEmail(),
+                    "username", savedUser.getUsername(),
+                    "timestamp", LocalDateTime.now().toString()
             ));
         } catch (Exception e) {
-            // Log but don't fail registration if socket fails
+            // Log but allow registration to proceed
             System.err.println("WebSocket broadcast failed: " + e.getMessage());
         }
 
-        // Generate verification token
+        // 4. Generate Verification Token
         EmailVerificationToken token = new EmailVerificationToken();
         token.setToken(UUID.randomUUID().toString());
-        token.setRegister(user);
+        token.setRegister(savedUser);
         token.setExpiryDate(LocalDateTime.now().plusHours(24));
 
         tokenRepo.save(token);
 
-        // Send verification email
-        emailService.sendVerificationEmail(user, token.getToken());
+        // 5. Send Verification Email
+        emailService.sendVerificationEmail(savedUser, token.getToken());
 
-        return Map.of("message", "Verification email sent");
+        return Map.of("message", "Registration successful! Please check your email to verify your account.");
     }
 }

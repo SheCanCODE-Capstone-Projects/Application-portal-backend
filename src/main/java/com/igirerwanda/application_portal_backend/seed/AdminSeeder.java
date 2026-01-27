@@ -19,7 +19,6 @@ public class AdminSeeder implements CommandLineRunner {
 
     private final RegisterRepository registerRepository;
     private final UserRepository userRepository;
-    // Removed CohortRepository as it is no longer needed
     private final PasswordEncoder passwordEncoder;
 
     @Override

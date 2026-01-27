@@ -9,7 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-
+import java.util.UUID;
 
 @Entity
 @Table(name = "register")
@@ -18,8 +18,8 @@ import java.time.LocalDateTime;
 public class Register {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(unique = true, nullable = false)
     private String email;
@@ -27,9 +27,8 @@ public class Register {
     @Column(unique = true)
     private String googleId;
 
-    private String username; // Removed unique constraint
+    private String username;
 
-    @Column(nullable = true)
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -52,9 +51,4 @@ public class Register {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-
 }
-
-
-

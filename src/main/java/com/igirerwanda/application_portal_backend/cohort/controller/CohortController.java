@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID; // Import UUID
 
 @RestController
 @RequestMapping("/api/v1")
@@ -29,7 +30,7 @@ public class CohortController {
 
     @PutMapping("/admin/cohorts/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public CohortDto updateCohort(@PathVariable Long id, @RequestBody CohortUpdateDto dto) {
+    public CohortDto updateCohort(@PathVariable UUID id, @RequestBody CohortUpdateDto dto) { // Changed Long to UUID
         CohortDto updated = service.updateCohort(id, dto);
         messagingTemplate.convertAndSend("/topic/cohorts/update", updated);
         return updated;
@@ -38,7 +39,7 @@ public class CohortController {
     @DeleteMapping("/admin/cohorts/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCohort(@PathVariable Long id) {
+    public void deleteCohort(@PathVariable UUID id) { // Changed Long to UUID
         service.deleteCohort(id);
         messagingTemplate.convertAndSend("/topic/cohorts/delete", id);
     }
@@ -49,7 +50,7 @@ public class CohortController {
         return service.getAllCohorts();
     }
 
-    //  Public Endpoints (No Admin Role Required)
+    //  Public Endpoints
 
     @GetMapping("/cohorts/frontend")
     public List<CohortDto> getCohortsForFrontend() {
@@ -57,7 +58,7 @@ public class CohortController {
     }
 
     @GetMapping("/cohorts/{id}")
-    public CohortDto getCohortById(@PathVariable Long id) {
+    public CohortDto getCohortById(@PathVariable UUID id) { // Changed Long to UUID
         return service.getCohortById(id);
     }
 }

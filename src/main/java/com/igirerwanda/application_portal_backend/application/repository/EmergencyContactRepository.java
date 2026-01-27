@@ -4,11 +4,11 @@ import com.igirerwanda.application_portal_backend.application.entity.EmergencyCo
 import com.igirerwanda.application_portal_backend.application.entity.PersonalInformation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface EmergencyContactRepository extends JpaRepository<EmergencyContact, Long> {
+public interface EmergencyContactRepository extends JpaRepository<EmergencyContact, UUID> {
     List<EmergencyContact> findByPersonalInformation(PersonalInformation personalInformation);
     void deleteByPersonalInformation(PersonalInformation personalInformation);
 }

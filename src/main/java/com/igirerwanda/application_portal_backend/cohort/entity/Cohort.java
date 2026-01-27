@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "cohorts")
@@ -21,8 +22,8 @@ import java.util.Set;
 public class Cohort {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     private String name;
     private String domain;
@@ -50,19 +51,18 @@ public class Cohort {
     @ElementCollection(targetClass = UserRole.class)
     @Enumerated(EnumType.STRING)
     private Set<UserRole> roles = new HashSet<>();
-    
-    // Eligibility criteria fields for automatic system rejection
+
     @ElementCollection(targetClass = Gender.class)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "cohort_allowed_genders", joinColumns = @JoinColumn(name = "cohort_id"))
     @Column(name = "gender")
     private Set<Gender> allowedGenders = new HashSet<>();
-    
+
     @ElementCollection
     @CollectionTable(name = "cohort_allowed_nationalities", joinColumns = @JoinColumn(name = "cohort_id"))
     @Column(name = "nationality")
     private Set<String> allowedNationalities = new HashSet<>();
-    
+
     @ElementCollection(targetClass = EducationalLevel.class)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "cohort_required_education_levels", joinColumns = @JoinColumn(name = "cohort_id"))

@@ -1,26 +1,24 @@
 package com.igirerwanda.application_portal_backend.application.entity;
+
 import com.igirerwanda.application_portal_backend.common.enums.Gender;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "personal_information")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 public class PersonalInformation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @OneToOne
     @JoinColumn(name = "application_id")
@@ -29,12 +27,11 @@ public class PersonalInformation {
     private String fullName;
     private String email;
     private String phone;
-    
+
     @Enumerated(EnumType.STRING)
     private Gender gender;
-    
-    private String nationality;
 
+    private String nationality;
     private String maritalStatus;
     private String socialLinks;
 
@@ -47,12 +44,12 @@ public class PersonalInformation {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    // Relationships as per ERD
+    // Relationships
     @OneToMany(mappedBy = "personalInformation", cascade = CascadeType.ALL)
-    private java.util.List<Document> documents;
+    private List<Document> documents;
 
     @OneToMany(mappedBy = "personalInformation", cascade = CascadeType.ALL)
-    private java.util.List<EmergencyContact> emergencyContacts;
+    private List<EmergencyContact> emergencyContacts;
 
     @OneToOne(mappedBy = "personalInformation", cascade = CascadeType.ALL)
     private EducationOccupation educationOccupation;

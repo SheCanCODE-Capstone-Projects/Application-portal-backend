@@ -8,6 +8,6 @@ import lombok.Setter;
 public class PreferenceDto {
     private String preferredCourse;
     private String preferredSchedule;
-    private String learningMode; // Online, Offline, Hybrid
+    private String learningMode;
     private String specialRequirements;
 }

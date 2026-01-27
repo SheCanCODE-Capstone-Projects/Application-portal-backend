@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,17 +28,15 @@ public class NotificationServiceImpl implements NotificationService {
     private final EmailService emailService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    // --- ACCEPT APPLICATION NOTIFICATION ---
+
     @Override
     public void sendApplicationAcceptedNotification(Application app) {
         String applicantName = getApplicantName(app);
         String cohortName = app.getCohort().getName();
 
-        //  Web Notification (Short & Sweet)
         String webTitle = "🎉 Application Accepted!";
         String webMessage = "Congratulations! You have been accepted into the " + cohortName + " program.";
 
-        //  Email Notification (Detailed & Professional)
         String emailSubject = "Congratulations! Acceptance to " + cohortName;
         String emailBody = String.format("""
             Dear %s,
@@ -57,21 +56,17 @@ public class NotificationServiceImpl implements NotificationService {
             The SheCanCODE Team
             """, applicantName, cohortName);
 
-        // Send it to both channels
         notifyUserMultiChannel(app.getUser(), webTitle, webMessage, emailSubject, emailBody, NotificationType.APPLICATION_ACCEPTED, app.getId(), "ACCEPTED");
     }
 
-    // --- REJECT APPLICATION NOTIFICATION ---
     @Override
     public void sendApplicationRejectedNotification(Application app) {
         String applicantName = getApplicantName(app);
         String cohortName = app.getCohort().getName();
 
-        // Web Notification
         String webTitle = "Application Status Update";
         String webMessage = "We have an update regarding your application for " + cohortName + ". Please check your email.";
 
-        // Email Notification (Empathetic & Encouraging)
         String emailSubject = "Update on your application for " + cohortName;
         String emailBody = String.format("""
             Dear %s,
@@ -91,17 +86,14 @@ public class NotificationServiceImpl implements NotificationService {
         notifyUserMultiChannel(app.getUser(), webTitle, webMessage, emailSubject, emailBody, NotificationType.APPLICATION_REJECTED, app.getId(), "REJECTED");
     }
 
-    // --- SCHEDULE INTERVIEW NOTIFICATION ---
     @Override
     public void sendInterviewScheduledNotification(Application app, String details) {
         String applicantName = getApplicantName(app);
         String cohortName = app.getCohort().getName();
 
-        // Web Notification
         String webTitle = "Interview Invitation 📅";
         String webMessage = "You have been invited to an interview for " + cohortName + ". Check your email for details.";
 
-        //  Email Notification (Clear & Actionable)
         String emailSubject = "Interview Invitation: " + cohortName;
         String emailBody = String.format("""
             Dear %s,
@@ -122,8 +114,6 @@ public class NotificationServiceImpl implements NotificationService {
 
         notifyUserMultiChannel(app.getUser(), webTitle, webMessage, emailSubject, emailBody, NotificationType.INTERVIEW_SCHEDULED, app.getId(), "INTERVIEW_SCHEDULED");
     }
-
-    // --- Other Notifications (Standard) ---
 
     @Override
     public void sendAccountActivatedNotification(User user) {
@@ -146,41 +136,28 @@ public class NotificationServiceImpl implements NotificationService {
         notifyUserMultiChannel(app.getUser(), title, message, title, message, NotificationType.APPLICATION_UNDER_REVIEW, app.getId(), "UNDER_REVIEW");
     }
 
-    //  Helper Methods
-
-    /**
-     * Tries to get the user's real full name from PersonalInfo.
-     * Fallbacks to their username if PersonalInfo is not yet filled.
-     */
     private String getApplicantName(Application app) {
         if (app.getPersonalInformation() != null &&
                 app.getPersonalInformation().getFullName() != null &&
                 !app.getPersonalInformation().getFullName().isEmpty()) {
             return app.getPersonalInformation().getFullName();
         }
-        // Fallback to username from the account
         return app.getUser().getRegister().getUsername();
     }
 
-    /**
-     * Handles sending to BOTH Web (WebSocket/DB) and Email channels.
-     * Allows distinct content for Web (short) vs Email (long/detailed).
-     */
     private void notifyUserMultiChannel(User user,
                                         String webTitle, String webMessage,
                                         String emailSubject, String emailBody,
-                                        NotificationType type, Long appId, String status) {
+                                        NotificationType type, UUID appId, String status) {
 
-        // 1. Save In-App Notification (Short message)
         saveInAppNotification(user, webTitle, webMessage, type, appId, status);
 
-        // 2. Send Email (Detailed message)
         if (user.getRegister().getEmail() != null) {
             emailService.sendEmail(user.getRegister().getEmail(), emailSubject, emailBody);
         }
     }
 
-    private void saveInAppNotification(User user, String title, String message, NotificationType type, Long appId, String status) {
+    private void saveInAppNotification(User user, String title, String message, NotificationType type, UUID appId, String status) {
         Notification notification = new Notification();
         notification.setUser(user);
         notification.setTitle(title);
@@ -192,7 +169,6 @@ public class NotificationServiceImpl implements NotificationService {
 
         Notification saved = notificationRepository.save(notification);
 
-        // Real-time WebSocket broadcast
         try {
             messagingTemplate.convertAndSendToUser(
                     user.getId().toString(),
@@ -204,30 +180,28 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-    // --- Standard Getter/Setter logic ---
-
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationDto> getUserNotifications(Long userId) {
+    public List<NotificationDto> getUserNotifications(UUID userId) {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationDto> getUnreadNotifications(Long userId) {
+    public List<NotificationDto> getUnreadNotifications(UUID userId) {
         return notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public long getUnreadCount(Long userId) {
+    public long getUnreadCount(UUID userId) {
         return notificationRepository.countUnreadByUserId(userId);
     }
 
     @Override
-    public void markAsRead(Long notificationId, Long userId) {
+    public void markAsRead(UUID notificationId, UUID userId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotFoundException("Notification not found"));
 
@@ -241,7 +215,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void markAllAsRead(Long userId) {
+    public void markAllAsRead(UUID userId) {
         List<Notification> unread = notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
         LocalDateTime now = LocalDateTime.now();
         unread.forEach(n -> {
@@ -258,6 +232,4 @@ public class NotificationServiceImpl implements NotificationService {
                 n.getApplicationId(), n.getApplicationStatus()
         );
     }
-
-    
 }

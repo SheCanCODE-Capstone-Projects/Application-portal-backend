@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID; // Import UUID
 
 @RestController
 @RequestMapping("/api/v1/admin/applications")
@@ -23,8 +24,6 @@ import java.util.List;
 public class AdminApplicationController {
 
     private final AdminApplicationService adminService;
-
-
 
     @GetMapping
     @Operation(summary = "Get All Active", description = "Get all active (non-deleted, non-archived) applications")
@@ -37,7 +36,7 @@ public class AdminApplicationController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get Application By ID", description = "Get details of any application (active, deleted, archived, rejected)")
-    public ResponseEntity<ApiResponse<ApplicationDto>> getDetails(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ApplicationDto>> getDetails(@PathVariable UUID id) { // Changed Long to UUID
         return ResponseEntity.ok(ApiResponse.success(
                 "Application details retrieved",
                 adminService.getApplicationDetails(id)
@@ -80,11 +79,9 @@ public class AdminApplicationController {
         ));
     }
 
-
-
     @PutMapping("/{id}/accept")
     @Operation(summary = "Accept Application", description = "Approves application and sends notification emails.")
-    public ResponseEntity<ApiResponse<ApplicationDto>> accept(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ApplicationDto>> accept(@PathVariable UUID id) { // Changed Long to UUID
         return ResponseEntity.ok(ApiResponse.success(
                 "Application accepted and applicant notified",
                 adminService.acceptApplication(id)
@@ -93,7 +90,7 @@ public class AdminApplicationController {
 
     @PutMapping("/{id}/reject")
     @Operation(summary = "Reject Application", description = "Rejects application and sends notification emails.")
-    public ResponseEntity<ApiResponse<ApplicationDto>> reject(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ApplicationDto>> reject(@PathVariable UUID id) { // Changed Long to UUID
         return ResponseEntity.ok(ApiResponse.success(
                 "Application rejected and applicant notified",
                 adminService.rejectApplication(id)
@@ -103,7 +100,7 @@ public class AdminApplicationController {
     @PutMapping("/{id}/schedule-interview")
     @Operation(summary = "Schedule Interview", description = "Sets interview date/time and notifies applicant with instructions.")
     public ResponseEntity<ApiResponse<ApplicationDto>> scheduleInterview(
-            @PathVariable Long id,
+            @PathVariable UUID id, // Changed Long to UUID
             @Valid @RequestBody InterviewScheduleRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 "Interview scheduled and invitation sent",
@@ -111,24 +108,23 @@ public class AdminApplicationController {
         ));
     }
 
-
     @DeleteMapping("/{id}")
     @Operation(summary = "Soft Delete", description = "Soft deletes an application.")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) { // Changed Long to UUID
         adminService.softDeleteApplication(id);
         return ResponseEntity.ok(ApiResponse.success("Application soft deleted successfully"));
     }
 
     @PutMapping("/{id}/archive")
     @Operation(summary = "Archive", description = "Moves application to archive.")
-    public ResponseEntity<ApiResponse<Void>> archive(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> archive(@PathVariable UUID id) { // Changed Long to UUID
         adminService.archiveApplication(id);
         return ResponseEntity.ok(ApiResponse.success("Application archived successfully"));
     }
 
     @PutMapping("/{id}/restore")
     @Operation(summary = "Restore", description = "Restores a deleted or archived application.")
-    public ResponseEntity<ApiResponse<Void>> restore(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> restore(@PathVariable UUID id) { // Changed Long to UUID
         adminService.restoreApplication(id);
         return ResponseEntity.ok(ApiResponse.success("Application restored successfully"));
     }

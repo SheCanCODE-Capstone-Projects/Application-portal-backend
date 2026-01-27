@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "admin_activity")
@@ -16,8 +17,8 @@ import java.time.LocalDateTime;
 public class AdminActivity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "admin_id")
@@ -28,12 +29,12 @@ public class AdminActivity {
     @JoinColumn(name = "application_id")
     @JsonIgnore
     private Application application;
-    
+
     @JsonProperty("adminName")
     public String getAdminName() {
         return admin != null ? admin.getName() : null;
     }
-    
+
     @JsonProperty("adminEmail")
     public String getAdminEmail() {
         return admin != null ? admin.getEmail() : null;
@@ -44,5 +45,5 @@ public class AdminActivity {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    private String email; // Add this to store the actual email
+    private String email;
 }

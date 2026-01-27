@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,14 +29,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User findById(Long id) {
+    public User findById(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
 
-
     @Override
-    public User findByRegisterId(Long registerId) {
+    public User findByRegisterId(UUID registerId) {
         return userRepository.findByRegisterId(registerId)
                 .orElseThrow(() -> new NotFoundException("User profile not found for Account ID: " + registerId));
     }
@@ -59,9 +59,10 @@ public class UserServiceImpl implements UserService {
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
+
     @Override
     @Transactional
-    public void applyToCohort(Long cohortId) {
+    public void applyToCohort(UUID cohortId) {
         User user = getAuthenticatedUser();
 
         if (user.getCohort() != null) {
@@ -81,7 +82,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User softDelete(Long id) {
+    public User softDelete(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
         user.softDelete();
@@ -90,36 +91,29 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User archive(Long id) {
+    public User archive(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
         user.archive();
         return userRepository.save(user);
     }
 
-
     private UserResponseDto mapToDto(User user) {
         UserResponseDto dto = new UserResponseDto();
-
+        dto.setId(user.getId()); // UUID
 
         if (user.getRegister() != null) {
             dto.setEmail(user.getRegister().getEmail());
             dto.setUsername(user.getRegister().getUsername());
         }
 
-
         if (user.getCohort() != null) {
-            dto.setCohortId(user.getCohort().getId());
+            dto.setCohortId(user.getCohort().getId()); // UUID
             dto.setCohortName(user.getCohort().getName());
         }
 
         dto.setStatus(user.getStatus());
         dto.setCreatedAt(user.getCreatedAt());
-
-        if (user.getCohort() != null) {
-            dto.setCohortId(user.getCohort().getId());
-            dto.setCohortName(user.getCohort().getName());
-        }
 
         return dto;
     }

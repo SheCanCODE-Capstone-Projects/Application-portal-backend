@@ -4,23 +4,22 @@ import com.igirerwanda.application_portal_backend.application.dto.ApplicationDto
 import com.igirerwanda.application_portal_backend.application.dto.InterviewScheduleRequest;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import java.util.List;
+import java.util.UUID; // Import UUID
 
 public interface AdminApplicationService {
-    // Retrieval
     List<ApplicationDto> getAllActiveApplications();
     List<ApplicationDto> getApplicationsByStatus(ApplicationStatus status);
     List<ApplicationDto> getSystemRejectedApplications();
     List<ApplicationDto> getArchivedApplications();
     List<ApplicationDto> getDeletedApplications();
-    ApplicationDto getApplicationDetails(Long applicationId);
 
-    // Actions
-    ApplicationDto acceptApplication(Long applicationId);
-    ApplicationDto rejectApplication(Long applicationId);
-    ApplicationDto scheduleInterview(Long applicationId, InterviewScheduleRequest request);
+    // Changed Long to UUID
+    ApplicationDto getApplicationDetails(UUID applicationId);
+    ApplicationDto acceptApplication(UUID applicationId);
+    ApplicationDto rejectApplication(UUID applicationId);
+    ApplicationDto scheduleInterview(UUID applicationId, InterviewScheduleRequest request);
 
-    // Management
-    void softDeleteApplication(Long applicationId);
-    void archiveApplication(Long applicationId);
-    void restoreApplication(Long applicationId); // Restore from deleted/archived
+    void softDeleteApplication(UUID applicationId);
+    void archiveApplication(UUID applicationId);
+    void restoreApplication(UUID applicationId);
 }
