@@ -4,10 +4,11 @@ import com.igirerwanda.application_portal_backend.common.enums.AdminRole;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class AdminResponseDto {
-    private Long id;
+    private UUID id;
     private String name;
     private String email;
     private AdminRole role;

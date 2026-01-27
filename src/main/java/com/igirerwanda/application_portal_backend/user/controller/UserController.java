@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -20,20 +21,16 @@ public class UserController {
     private final UserService userService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    // --- USER SELF-SERVICE ENDPOINTS ---
-
     @GetMapping("/me")
     public ResponseEntity<UserResponseDto> getMyProfile() {
         return ResponseEntity.ok(userService.getCurrentUserProfile());
     }
 
     @PostMapping("/apply/{cohortId}")
-    public ResponseEntity<?> applyToCohort(@PathVariable Long cohortId) {
+    public ResponseEntity<?> applyToCohort(@PathVariable UUID cohortId) {
         userService.applyToCohort(cohortId);
         return ResponseEntity.ok(Map.of("message", "Successfully applied to cohort"));
     }
-
-    // --- ADMIN ONLY ENDPOINTS ---
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -43,7 +40,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable UUID id) {
         User user = userService.softDelete(id);
         messagingTemplate.convertAndSend("/topic/admin/user-updates",
                 Map.of("action", "DELETE", "userId", id, "status", user.getStatus()));
@@ -52,7 +49,7 @@ public class UserController {
 
     @PatchMapping("/{id}/archive")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> archive(@PathVariable Long id) {
+    public ResponseEntity<?> archive(@PathVariable UUID id) {
         User user = userService.archive(id);
         messagingTemplate.convertAndSend("/topic/admin/user-updates",
                 Map.of("action", "ARCHIVE", "userId", id, "status", user.getStatus()));

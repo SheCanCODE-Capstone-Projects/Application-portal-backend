@@ -15,7 +15,6 @@
     </parent>
 
     <!-- Project Info -->
-
     <groupId>org.igirerwanda</groupId>
     <artifactId>application-portal-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
@@ -23,16 +22,14 @@
     <description>Application Portal Backend</description>
 
     <!-- Properties -->
-
     <properties>
         <java.version>21</java.version>
         <jjwt.version>0.11.5</jjwt.version>
         <springdoc.version>2.6.0</springdoc.version>
+        <bucket4j.version>7.6.0</bucket4j.version>
     </properties>
 
-
     <!-- Dependencies -->
-
     <dependencies>
 
         <!-- SPRING WEB -->
@@ -110,10 +107,30 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-        <!-- HTTP Client for Resend API -->
+        <!-- WEBFLUX (for external APIs like Resend) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- RATE LIMITING -->
+        <dependency>
+            <groupId>com.github.vladimir-bukhtoyarov</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>${bucket4j.version}</version>
+        </dependency>
+
+        <!-- ACTUATOR -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- H2 (DEV / TEST) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- LOMBOK -->
@@ -124,22 +141,18 @@
         </dependency>
 
         <!-- TESTING -->
-
-        <!-- Spring Boot Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- Spring Security Test (@WithMockUser) -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- Mockito -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
@@ -152,22 +165,9 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Actuator for health checks -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-
     </dependencies>
 
     <!-- Build -->
-
     <build>
         <plugins>
 
@@ -177,7 +177,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
 
-            <!-- JAVA 21 COMPILER -->
+            <!-- JAVA 21 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

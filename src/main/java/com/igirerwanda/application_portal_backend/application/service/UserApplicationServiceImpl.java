@@ -8,18 +8,19 @@ import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
 import com.igirerwanda.application_portal_backend.common.exception.ResourceNotFoundException;
 import com.igirerwanda.application_portal_backend.common.exception.ValidationException;
+import com.igirerwanda.application_portal_backend.notification.service.WebSocketService;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException; // Required import
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import com.igirerwanda.application_portal_backend.notification.service.WebSocketService;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     private final WebSocketService webSocketService;
 
     @Override
-    public ApplicationDto startApplicationForUser(Long registerId) {
+    public ApplicationDto startApplicationForUser(UUID registerId) {
         User user = userService.findByRegisterId(registerId);
         Cohort cohort = user.getCohort();
 
@@ -49,7 +50,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             throw new IllegalStateException("Please select a cohort before starting an application.");
         }
 
-        // Single active application per user - return existing DRAFT if found
         Application app = applicationRepository.findByUserIdAndCohortId(user.getId(), cohort.getId())
                 .orElseGet(() -> {
                     Application newApp = new Application();
@@ -57,15 +57,14 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                     newApp.setCohort(cohort);
                     newApp.setStatus(ApplicationStatus.DRAFT);
                     Application savedApp = applicationRepository.save(newApp);
-                    
-                    // Broadcast application started event
+
                     webSocketService.broadcastApplicationUpdate(Map.of(
-                        "event", "APPLICATION_STARTED",
-                        "applicationId", savedApp.getId(),
-                        "userId", user.getId(),
-                        "status", ApplicationStatus.DRAFT
+                            "event", "APPLICATION_STARTED",
+                            "applicationId", savedApp.getId().toString(),
+                            "userId", user.getId().toString(),
+                            "status", ApplicationStatus.DRAFT
                     ));
-                    
+
                     return savedApp;
                 });
 
@@ -73,7 +72,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     }
 
     @Override
-    public ApplicationDto savePersonalInfo(Long appId, Long registerId, PersonalInfoDto dto) {
+    public ApplicationDto savePersonalInfo(UUID appId, UUID registerId, PersonalInfoDto dto) {
         Application application = getOwnedApplication(appId, registerId);
         PersonalInformation pi = ensurePersonalInfo(application);
 
@@ -87,15 +86,13 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         pi.setAdditionalInformation(dto.getAdditionalInformation());
 
         personalInfoRepository.save(pi);
-        
-        // Broadcast step update event
         broadcastStepUpdate(application, "PERSONAL_INFO");
-        
+
         return mapToDto(application);
     }
 
     @Override
-    public ApplicationDto saveEducation(Long appId, Long registerId, EducationDto dto) {
+    public ApplicationDto saveEducation(UUID appId, UUID registerId, EducationDto dto) {
         Application application = getOwnedApplication(appId, registerId);
         PersonalInformation pi = ensurePersonalInfo(application);
 
@@ -108,15 +105,13 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         edu.setYearsExperience(dto.getYearsExperience());
 
         educationalRepository.save(edu);
-        
-        // Broadcast step update event
         broadcastStepUpdate(application, "EDUCATION");
-        
+
         return mapToDto(application);
     }
 
     @Override
-    public ApplicationDto saveMotivation(Long appId, Long registerId, MotivationDto dto) {
+    public ApplicationDto saveMotivation(UUID appId, UUID registerId, MotivationDto dto) {
         Application application = getOwnedApplication(appId, registerId);
         PersonalInformation pi = ensurePersonalInfo(application);
 
@@ -127,15 +122,13 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         m.setPreferredCourse(dto.getPreferredCourse());
 
         motivationAnswerRepository.save(m);
-        
-        // Broadcast step update event
         broadcastStepUpdate(application, "MOTIVATION");
-        
+
         return mapToDto(application);
     }
 
     @Override
-    public ApplicationDto saveDisability(Long appId, Long registerId, DisabilityDto dto) {
+    public ApplicationDto saveDisability(UUID appId, UUID registerId, DisabilityDto dto) {
         Application application = getOwnedApplication(appId, registerId);
         PersonalInformation pi = ensurePersonalInfo(application);
 
@@ -146,15 +139,13 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         d.setDisabilityDescription(dto.getDisabilityDescription());
 
         disabilityRepository.save(d);
-        
-        // Broadcast step update event
         broadcastStepUpdate(application, "DISABILITY");
-        
+
         return mapToDto(application);
     }
 
     @Override
-    public ApplicationDto saveVulnerability(Long appId, Long registerId, VulnerabilityDto dto) {
+    public ApplicationDto saveVulnerability(UUID appId, UUID registerId, VulnerabilityDto dto) {
         Application application = getOwnedApplication(appId, registerId);
         PersonalInformation pi = ensurePersonalInfo(application);
 
@@ -165,22 +156,20 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         v.setDescription(dto.getDescription());
 
         vulnerabilityRepository.save(v);
-        
-        // Broadcast step update event
         broadcastStepUpdate(application, "VULNERABILITY");
-        
+
         return mapToDto(application);
     }
 
     @Override
-    public ApplicationDto saveDocuments(Long appId, Long registerId, List<DocumentDto> dtos) {
+    public ApplicationDto saveDocuments(UUID appId, UUID registerId, List<DocumentDto> documentDtos) {
         Application application = getOwnedApplication(appId, registerId);
         PersonalInformation pi = ensurePersonalInfo(application);
 
         documentRepository.deleteByPersonalInformation(pi);
         documentRepository.flush();
 
-        List<Document> documents = dtos.stream().map(dto -> {
+        List<Document> documents = documentDtos.stream().map(dto -> {
             Document doc = new Document();
             doc.setPersonalInformation(pi);
             doc.setDocType(dto.getDocType());
@@ -189,22 +178,20 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         }).collect(Collectors.toList());
 
         documentRepository.saveAll(documents);
-        
-        // Broadcast step update event
         broadcastStepUpdate(application, "DOCUMENTS");
-        
+
         return mapToDto(application);
     }
 
     @Override
-    public ApplicationDto saveEmergencyContacts(Long appId, Long registerId, List<EmergencyContactDto> dtos) {
+    public ApplicationDto saveEmergencyContacts(UUID appId, UUID registerId, List<EmergencyContactDto> contactDtos) {
         Application application = getOwnedApplication(appId, registerId);
         PersonalInformation pi = ensurePersonalInfo(application);
 
         emergencyContactRepository.deleteByPersonalInformation(pi);
         emergencyContactRepository.flush();
 
-        List<EmergencyContact> contacts = dtos.stream().map(dto -> {
+        List<EmergencyContact> contacts = contactDtos.stream().map(dto -> {
             EmergencyContact contact = new EmergencyContact();
             contact.setPersonalInformation(pi);
             contact.setName(dto.getName());
@@ -214,73 +201,60 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         }).collect(Collectors.toList());
 
         emergencyContactRepository.saveAll(contacts);
-        
-        // Broadcast step update event
         broadcastStepUpdate(application, "EMERGENCY_CONTACTS");
-        
+
         return mapToDto(application);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ApplicationDto getApplicationForUser(Long userId) {
+    public ApplicationDto getApplicationForUser(UUID userId) {
         Application application = applicationRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("No application found for user with ID: " + userId));
         return mapToDto(application);
     }
 
     @Override
-    public ApplicationSubmissionResponseDto submitApplication(Long appId, Long registerId) {
+    public ApplicationSubmissionResponseDto submitApplication(UUID appId, UUID registerId) {
         Application app = getOwnedApplication(appId, registerId);
 
-        // Validate submission requirements
         applicationValidationService.validateForSubmission(app);
-
-        // Perform automatic system rejection evaluation
         systemRejectionService.evaluateAndRejectIfNeeded(app);
-        
-//        ApplicationDto applicationDto = mapToDto(app);
-        
-        // If application was system rejected, return system rejection response
+
         if (app.getStatus() == ApplicationStatus.SYSTEM_REJECTED) {
             return ApplicationSubmissionResponseDto.systemRejected(
-                app.getSystemRejectionReason(), 
-                mapToDto(app)
+                    app.getSystemRejectionReason(),
+                    mapToDto(app)
             );
         }
-        
-        // If not rejected, proceed with normal submission
+
         app.setStatus(ApplicationStatus.SUBMITTED);
         app.setSubmittedAt(LocalDateTime.now());
         Application savedApp = applicationRepository.save(app);
 
-        // Broadcast application submitted event
         webSocketService.broadcastApplicationUpdate(Map.of(
-            "event", "APPLICATION_SUBMITTED",
-            "applicationId", savedApp.getId(),
-            "userId", savedApp.getUser().getId(),
-            "status", ApplicationStatus.SUBMITTED,
-            "submittedAt", savedApp.getSubmittedAt()
+                "event", "APPLICATION_SUBMITTED",
+                "applicationId", savedApp.getId().toString(),
+                "userId", savedApp.getUser().getId().toString(),
+                "status", ApplicationStatus.SUBMITTED,
+                "submittedAt", savedApp.getSubmittedAt().toString()
         ));
-        
-        // Notify admin dashboard
+
         webSocketService.broadcastToAdmin("applications", Map.of(
-            "event", "NEW_SUBMISSION",
-            "applicationId", savedApp.getId(),
-            "applicantName", savedApp.getPersonalInformation() != null ? 
-                savedApp.getPersonalInformation().getFullName() : "Unknown"
+                "event", "NEW_SUBMISSION",
+                "applicationId", savedApp.getId().toString(),
+                "applicantName", savedApp.getPersonalInformation() != null ?
+                        savedApp.getPersonalInformation().getFullName() : "Unknown"
         ));
 
         return ApplicationSubmissionResponseDto.submitted(mapToDto(savedApp));
     }
 
-    // FIX: Method signature now matches interface (includes userId)
     @Override
-    public double calculateCompletionPercentage(Long applicationId, Long userId) {
+    public double calculateCompletionPercentage(UUID applicationId, UUID userId) {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new NotFoundException("Application not found"));
 
-        // SECURITY CHECK: Ensure user owns the application
         if (!app.getUser().getId().equals(userId)) {
             throw new AccessDeniedException("Access denied: You do not own this application.");
         }
@@ -306,20 +280,18 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         return ((double) score / totalSections) * 100;
     }
 
-    private Application getOwnedApplication(Long appId, Long registerId) {
+    private Application getOwnedApplication(UUID appId, UUID registerId) {
         Application app = applicationRepository.findById(appId)
                 .orElseThrow(() -> new NotFoundException("Application not found"));
 
-        // Security Fix: Use AccessDeniedException
         if (!app.getUser().getRegister().getId().equals(registerId)) {
             throw new AccessDeniedException("Access denied: You do not own this application.");
         }
-        
-        // Prevent editing submitted applications
+
         if (app.getStatus() != ApplicationStatus.DRAFT) {
             throw new ValidationException("Cannot edit application with status: " + app.getStatus() + ". Only DRAFT applications can be edited.");
         }
-        
+
         return app;
     }
 
@@ -327,7 +299,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         if (app.getPersonalInformation() == null) {
             PersonalInformation pi = new PersonalInformation();
             pi.setApplication(app);
-            // FIX: Set bidirectional relationship to ensure persistence
             app.setPersonalInformation(pi);
             return personalInfoRepository.save(pi);
         }
@@ -338,28 +309,26 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         T value = getter.get();
         return (value != null) ? value : constructor.get();
     }
-    
+
     private void broadcastStepUpdate(Application application, String stepName) {
         double progress = calculateCompletionPercentage(application.getId(), application.getUser().getId());
-        
-        // Broadcast to user
+
         webSocketService.broadcastApplicationProgress(
-            application.getUser().getId().toString(),
-            Map.of(
-                "event", "STEP_UPDATED",
-                "applicationId", application.getId(),
-                "step", stepName,
-                "progress", progress
-            )
+                application.getUser().getId().toString(),
+                Map.of(
+                        "event", "STEP_UPDATED",
+                        "applicationId", application.getId().toString(),
+                        "step", stepName,
+                        "progress", progress
+                )
         );
-        
-        // Broadcast to admin dashboard
+
         webSocketService.broadcastToAdmin("progress", Map.of(
-            "event", "APPLICATION_PROGRESS",
-            "applicationId", application.getId(),
-            "step", stepName,
-            "progress", progress,
-            "userId", application.getUser().getId()
+                "event", "APPLICATION_PROGRESS",
+                "applicationId", application.getId().toString(),
+                "step", stepName,
+                "progress", progress,
+                "userId", application.getUser().getId().toString()
         ));
     }
 
@@ -371,7 +340,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         dto.setSystemRejected(app.isSystemRejected());
         dto.setSystemRejectionReason(app.getSystemRejectionReason());
 
-        // Fix: Null safe check for cohort
         if (app.getCohort() != null) {
             dto.setCohortId(app.getCohort().getId());
             dto.setCohortName(app.getCohort().getName());

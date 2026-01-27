@@ -6,13 +6,13 @@ import com.igirerwanda.application_portal_backend.cohort.dto.*;
 import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import com.igirerwanda.application_portal_backend.cohort.mapper.CohortMapper;
 import com.igirerwanda.application_portal_backend.cohort.repository.CohortRepository;
-import com.igirerwanda.application_portal_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet; // ✅ Import HashSet
+import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 public class CohortServiceImpl implements CohortService {
 
     private final CohortRepository repository;
-    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -35,23 +34,14 @@ public class CohortServiceImpl implements CohortService {
 
     @Override
     @Transactional
-    public CohortDto updateCohort(Long id, CohortUpdateDto dto) {
+    public CohortDto updateCohort(UUID id, CohortUpdateDto dto) {
         Cohort cohort = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Cohort not found with id: " + id));
 
         if (dto.getName() != null) cohort.setName(dto.getName());
         if (dto.getDescription() != null) cohort.setDescription(dto.getDescription());
-
-        if (dto.getRequirements() != null) {
-            cohort.setRequirements(new HashSet<>(dto.getRequirements()));
-        }
-
-
-
-        if (dto.getRules() != null) {
-            cohort.setRules(new HashSet<>(dto.getRules()));
-        }
-
+        if (dto.getRequirements() != null) cohort.setRequirements(new HashSet<>(dto.getRequirements()));
+        if (dto.getRules() != null) cohort.setRules(new HashSet<>(dto.getRules()));
         if (dto.getIsOpen() != null) cohort.setIsOpen(dto.getIsOpen());
         if (dto.getApplicationLimit() != null) cohort.setApplicationLimit(dto.getApplicationLimit());
 
@@ -69,7 +59,6 @@ public class CohortServiceImpl implements CohortService {
     @Override
     @Transactional(readOnly = true)
     public List<CohortDto> getCohortsForFrontend() {
-        // Only return cohorts marked as open
         return repository.findAll().stream()
                 .filter(Cohort::getIsOpen)
                 .map(CohortMapper::toDto)
@@ -78,7 +67,7 @@ public class CohortServiceImpl implements CohortService {
 
     @Override
     @Transactional(readOnly = true)
-    public CohortDto getCohortById(Long id) {
+    public CohortDto getCohortById(UUID id) {
         return repository.findById(id)
                 .map(CohortMapper::toDto)
                 .orElseThrow(() -> new NotFoundException("Cohort not found with id: " + id));
@@ -86,7 +75,7 @@ public class CohortServiceImpl implements CohortService {
 
     @Override
     @Transactional
-    public void deleteCohort(Long id) {
+    public void deleteCohort(UUID id) {
         if (!repository.existsById(id)) {
             throw new NotFoundException("Cohort not found with id: " + id);
         }

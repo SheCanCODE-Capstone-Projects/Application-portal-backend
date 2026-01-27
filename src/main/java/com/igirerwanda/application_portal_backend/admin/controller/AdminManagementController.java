@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/management")
@@ -40,7 +41,7 @@ public class AdminManagementController {
 
     @GetMapping("/{adminId}")
     @Operation(summary = "Get admin user by ID")
-    public ResponseEntity<AdminResponseDto> getAdminById(@PathVariable Long adminId) {
+    public ResponseEntity<AdminResponseDto> getAdminById(@PathVariable UUID adminId) {
         AdminResponseDto admin = adminService.getAdminById(adminId);
         return ResponseEntity.ok(admin);
     }
@@ -48,7 +49,7 @@ public class AdminManagementController {
     @PutMapping("/{adminId}")
     @Operation(summary = "Update admin user")
     public ResponseEntity<AdminResponseDto> updateAdmin(
-            @PathVariable Long adminId,
+            @PathVariable UUID adminId,
             @Valid @RequestBody AdminCreateDto adminUpdateDto) {
         AdminResponseDto response = adminService.updateAdmin(adminId, adminUpdateDto);
         return ResponseEntity.ok(response);
@@ -56,7 +57,7 @@ public class AdminManagementController {
 
     @DeleteMapping("/{adminId}")
     @Operation(summary = "Delete admin user")
-    public ResponseEntity<Void> deleteAdmin(@PathVariable Long adminId) {
+    public ResponseEntity<Void> deleteAdmin(@PathVariable UUID adminId) {
         adminService.deleteAdmin(adminId);
         return ResponseEntity.noContent().build();
     }

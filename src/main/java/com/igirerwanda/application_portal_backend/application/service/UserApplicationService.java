@@ -1,23 +1,24 @@
 package com.igirerwanda.application_portal_backend.application.service;
 
 import com.igirerwanda.application_portal_backend.application.dto.*;
-
 import java.util.List;
+import java.util.UUID;
 
 public interface UserApplicationService {
-    ApplicationDto startApplicationForUser(Long userId);
-    ApplicationSubmissionResponseDto submitApplication(Long applicationId, Long userId);
-    ApplicationDto getApplicationForUser(Long userId);
+    ApplicationDto startApplicationForUser(UUID userId);
+
+    ApplicationSubmissionResponseDto submitApplication(UUID applicationId, UUID userId);
+
+    ApplicationDto getApplicationForUser(UUID userId);
 
     // Progressive Steps
-    ApplicationDto savePersonalInfo(Long applicationId, Long userId, PersonalInfoDto dto);
-    ApplicationDto saveEducation(Long applicationId, Long userId, EducationDto dto);
-    ApplicationDto saveMotivation(Long applicationId, Long userId, MotivationDto dto);
-    ApplicationDto saveDisability(Long applicationId, Long userId, DisabilityDto dto);
-    ApplicationDto saveVulnerability(Long applicationId, Long userId, VulnerabilityDto dto);
-    ApplicationDto saveDocuments(Long applicationId, Long userId, List<DocumentDto> dtos);
-    ApplicationDto saveEmergencyContacts(Long applicationId, Long userId, List<EmergencyContactDto> dtos);
+    ApplicationDto savePersonalInfo(UUID applicationId, UUID userId, PersonalInfoDto dto);
+    ApplicationDto saveEducation(UUID applicationId, UUID userId, EducationDto dto);
+    ApplicationDto saveMotivation(UUID applicationId, UUID userId, MotivationDto dto);
+    ApplicationDto saveDisability(UUID applicationId, UUID userId, DisabilityDto dto);
+    ApplicationDto saveVulnerability(UUID applicationId, UUID userId, VulnerabilityDto dto);
+    ApplicationDto saveDocuments(UUID applicationId, UUID userId, List<DocumentDto> dtos);
+    ApplicationDto saveEmergencyContacts(UUID applicationId, UUID userId, List<EmergencyContactDto> dtos);
 
-    // FIX: This method must accept userId to verify ownership
-    double calculateCompletionPercentage(Long applicationId, Long userId);
+    double calculateCompletionPercentage(UUID applicationId, UUID userId);
 }

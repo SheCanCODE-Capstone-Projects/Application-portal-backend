@@ -4,6 +4,7 @@ import com.igirerwanda.application_portal_backend.application.entity.Application
 import com.igirerwanda.application_portal_backend.notification.dto.NotificationDto;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import java.util.List;
+import java.util.UUID;
 
 public interface NotificationService {
     // Triggers
@@ -15,9 +16,9 @@ public interface NotificationService {
     void sendInterviewScheduledNotification(Application application, String interviewDetails);
 
     // Management
-    List<NotificationDto> getUserNotifications(Long userId);
-    List<NotificationDto> getUnreadNotifications(Long userId);
-    long getUnreadCount(Long userId);
-    void markAsRead(Long notificationId, Long userId);
-    void markAllAsRead(Long userId);
+    List<NotificationDto> getUserNotifications(UUID userId);
+    List<NotificationDto> getUnreadNotifications(UUID userId);
+    long getUnreadCount(UUID userId);
+    void markAsRead(UUID notificationId, UUID userId);
+    void markAllAsRead(UUID userId);
 }

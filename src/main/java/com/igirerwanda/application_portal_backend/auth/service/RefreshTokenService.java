@@ -24,14 +24,15 @@ public class RefreshTokenService {
     private long refreshTokenDurationMs;
 
     public RefreshToken createRefreshToken(Register user) {
-        // Revoke existing tokens for this user
+        // Revoke any existing tokens for security
         refreshTokenRepository.revokeAllUserTokens(user);
-        
+
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setToken(UUID.randomUUID().toString());
+        // Fix: Use seconds for duration calculation
         refreshToken.setExpiryDate(LocalDateTime.now().plusSeconds(refreshTokenDurationMs / 1000));
-        
+
         return refreshTokenRepository.save(refreshToken);
     }
 
@@ -42,7 +43,7 @@ public class RefreshTokenService {
     public RefreshToken verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().isBefore(LocalDateTime.now()) || token.isRevoked()) {
             refreshTokenRepository.delete(token);
-            throw new ValidationException("Refresh token expired or revoked");
+            throw new ValidationException("Refresh token was expired. Please make a new signin request");
         }
         return token;
     }
@@ -52,11 +53,6 @@ public class RefreshTokenService {
         refreshTokenRepository.save(token);
     }
 
-    public void revokeAllUserTokens(Register user) {
-        refreshTokenRepository.revokeAllUserTokens(user);
-    }
-
-    @Transactional
     public void deleteExpiredTokens() {
         refreshTokenRepository.deleteExpiredTokens(LocalDateTime.now());
     }

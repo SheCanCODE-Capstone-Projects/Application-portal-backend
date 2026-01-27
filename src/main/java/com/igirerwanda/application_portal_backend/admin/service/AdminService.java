@@ -5,16 +5,15 @@ import com.igirerwanda.application_portal_backend.admin.dto.AdminResponseDto;
 import com.igirerwanda.application_portal_backend.admin.entity.AdminActivity;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface AdminService {
     AdminResponseDto createAdmin(AdminCreateDto adminCreateDto);
     List<AdminActivity> getAdminActivities();
-    
 
-    
     // Admin CRUD
     List<AdminResponseDto> getAllAdmins();
-    AdminResponseDto getAdminById(Long adminId);
-    AdminResponseDto updateAdmin(Long adminId, AdminCreateDto adminUpdateDto);
-    void deleteAdmin(Long adminId);
+    AdminResponseDto getAdminById(UUID adminId);
+    AdminResponseDto updateAdmin(UUID adminId, AdminCreateDto adminUpdateDto);
+    void deleteAdmin(UUID adminId);
 }

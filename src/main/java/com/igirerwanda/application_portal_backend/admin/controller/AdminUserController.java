@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID; // Import UUID
 
 @RestController
 @RequestMapping("/api/v1/admin/users")
@@ -18,12 +19,11 @@ public class AdminUserController {
 
     @GetMapping
     public ResponseEntity<List<UserResponseDto>> getAll() {
-
         return ResponseEntity.ok(userService.getAllUsersDetailed());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable UUID id) {
         userService.softDelete(id);
         return ResponseEntity.ok("User soft-deleted");
     }

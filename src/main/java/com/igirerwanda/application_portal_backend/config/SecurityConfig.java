@@ -61,9 +61,9 @@ public class SecurityConfig {
         } else if (isDevOrStaging) {
 
             configuration.setAllowedOriginPatterns(
-                    List.of("http://localhost:*")
+                    List.of("http://localhost:3000")
             );
-            configuration.setAllowCredentials(false);
+            configuration.setAllowCredentials(true);
         }
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
@@ -92,6 +92,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/api/v1/auth/**",
+                                "/api/v1/auth/google/**",
                                 "/login/oauth2/code/**"
                         ).permitAll()
 
