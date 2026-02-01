@@ -28,11 +28,11 @@ public class GoogleAuthService {
     public LoginResponse handleGoogleAuth(String email, String googleId, String name) {
         Register register = registerRepository.findByEmail(email)
                 .map(existing -> {
-                    // If user exists with different provider, allow Google login
+
                     if (existing.getProvider() != AuthProvider.GOOGLE && existing.getProvider() != AuthProvider.LOCAL) {
                         throw new IllegalStateException("Email already registered with another provider");
                     }
-                    // Update to Google provider if was local
+
                     if (existing.getProvider() == AuthProvider.LOCAL) {
                         existing.setProvider(AuthProvider.GOOGLE);
                         existing.setGoogleId(googleId);
@@ -42,7 +42,6 @@ public class GoogleAuthService {
                     return existing;
                 })
                 .orElseGet(() -> {
-                    // Create new Google user
                     Register newUser = new Register();
                     newUser.setEmail(email);
                     newUser.setGoogleId(googleId);
@@ -53,10 +52,10 @@ public class GoogleAuthService {
                     return registerRepository.save(newUser);
                 });
 
-        // Ensure user record exists in users table
+
         userPromotionService.promote(register);
         
-        // Generate tokens
+
         String accessToken = jwtService.generateAccessToken(register);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(register);
         

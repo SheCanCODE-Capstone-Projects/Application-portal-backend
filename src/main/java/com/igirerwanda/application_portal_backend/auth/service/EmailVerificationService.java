@@ -23,7 +23,6 @@ public class EmailVerificationService {
     private final EmailService emailService;
     private final UserPromotionService userPromotionService;
 
-    // Fixed constructor parameters
     public EmailVerificationService(
             EmailVerificationTokenRepository tokenRepo,
             RegisterRepository registerRepo,
@@ -71,14 +70,11 @@ public class EmailVerificationService {
             throw new ValidationException("Google accounts do not require email verification");
         }
 
-        // 1. Delete the old token
+
         tokenRepo.deleteByRegister(user);
 
-        // 2. CRITICAL: Force the database to execute the delete RIGHT NOW
-        // This clears the unique constraint for the register_id
         tokenRepo.flush();
 
-        // 3. Now it is safe to create the new one
         EmailVerificationToken token = new EmailVerificationToken();
         token.setToken(UUID.randomUUID().toString());
         token.setRegister(user);

@@ -28,7 +28,7 @@ public class EmailService {
     @Value("${app.mail.from.name:Application Portal}")
     private String fromName;
 
-    @Value("${app.frontend.base-url:http://localhost:3000}")
+    @Value("${app.frontend.base-url}")
     private String frontendBaseUrl;
 
     public void sendEmail(String to, String subject, String htmlContent) {

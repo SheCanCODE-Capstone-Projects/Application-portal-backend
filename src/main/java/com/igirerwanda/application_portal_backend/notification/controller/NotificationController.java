@@ -23,7 +23,7 @@ public class NotificationController {
     private final NotificationService notificationService;
     private final JwtUtil jwtUtil;
 
-    // Helper to get UUID from JWT
+
     private UUID getUserId() {
         return UUID.fromString(jwtUtil.getCurrentUserId());
     }

@@ -30,7 +30,7 @@ public class CohortController {
 
     @PutMapping("/admin/cohorts/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public CohortDto updateCohort(@PathVariable UUID id, @RequestBody CohortUpdateDto dto) { // Changed Long to UUID
+    public CohortDto updateCohort(@PathVariable UUID id, @RequestBody CohortUpdateDto dto) {
         CohortDto updated = service.updateCohort(id, dto);
         messagingTemplate.convertAndSend("/topic/cohorts/update", updated);
         return updated;
@@ -39,7 +39,7 @@ public class CohortController {
     @DeleteMapping("/admin/cohorts/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCohort(@PathVariable UUID id) { // Changed Long to UUID
+    public void deleteCohort(@PathVariable UUID id) {
         service.deleteCohort(id);
         messagingTemplate.convertAndSend("/topic/cohorts/delete", id);
     }

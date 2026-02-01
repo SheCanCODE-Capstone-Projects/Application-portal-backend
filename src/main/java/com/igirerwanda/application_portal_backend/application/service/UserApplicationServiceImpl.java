@@ -208,9 +208,12 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApplicationDto getApplicationForUser(UUID userId) {
-        Application application = applicationRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("No application found for user with ID: " + userId));
+    public ApplicationDto getApplicationForUser(UUID registerId) {
+        User user = userService.findByRegisterId(registerId);
+
+        Application application = applicationRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("No application found for user"));
+
         return mapToDto(application);
     }
 
