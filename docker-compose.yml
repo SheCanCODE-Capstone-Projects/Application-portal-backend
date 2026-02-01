@@ -20,6 +20,22 @@ services:
       - app-network
 
 
+  # NEW: Master Database
+  master-db:
+    image: postgres:15
+    container_name: portal-master-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: master_data_db
+      POSTGRES_USER: master_user
+      POSTGRES_PASSWORD: master_password
+    volumes:
+      - master_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432" # Different port to avoid conflict
+    networks:
+      - app-network
+
   backend:
     image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
     container_name: portal-backend

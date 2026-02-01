@@ -5,8 +5,11 @@ import com.igirerwanda.application_portal_backend.application.entity.*;
 import com.igirerwanda.application_portal_backend.application.repository.ApplicationRepository;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
+import com.igirerwanda.application_portal_backend.me.service.MasterDataService;
 import com.igirerwanda.application_portal_backend.notification.service.NotificationService;
+import io.micrometer.common.util.internal.logging.InternalLogger;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +20,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class AdminApplicationServiceImpl implements AdminApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final NotificationService notificationService;
+    private final MasterDataService masterDataService;
 
     @Override
     public List<ApplicationDto> getAllActiveApplications() {
@@ -41,6 +46,15 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
         Application app = findById(applicationId);
         app.setStatus(ApplicationStatus.ACCEPTED);
         Application saved = applicationRepository.save(app);
+
+        try {
+            log.info("Attempting to sync accepted user {} to Master Data...", app.getId());
+            masterDataService.syncUserToMaster(saved);
+        } catch (Exception e) {
+            log.error("Failed to sync user to Master DB: {}", e.getMessage());
+            // We do NOT roll back transaction here; acceptance is valid even if sync fails temporarily
+        }
+
         notificationService.sendApplicationAcceptedNotification(saved);
         return mapToDto(saved);
     }
