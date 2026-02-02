@@ -7,105 +7,57 @@ import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
 import com.igirerwanda.application_portal_backend.common.enums.Gender;
 import com.igirerwanda.application_portal_backend.common.enums.EducationalLevel;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 public class CohortRuleService {
 
-    public boolean evaluateApplication(Application application, Cohort cohort) {
-        if (cohort == null || application.getPersonalInformation() == null) {
-            return true;
+    public String evaluateApplication(Application application, Cohort cohort) {
+        PersonalInformation pi = application.getPersonalInformation();
+        if (pi == null) return "Missing personal information.";
+
+        // 1. Nationality: "if not a rwandan you are rejected"
+        String nat = pi.getNationality();
+        if (nat == null || (!nat.equalsIgnoreCase("Rwandan") && !nat.equalsIgnoreCase("Rwanda"))) {
+            return "REJECT: Only Rwandan nationals are eligible.";
         }
 
-        PersonalInformation personalInfo = application.getPersonalInformation();
-        
-        // Evaluate gender restrictions
-        if (!evaluateGenderEligibility(personalInfo, cohort)) {
-            return false;
-        }
-        
-        // Evaluate nationality restrictions
-        if (!evaluateNationalityEligibility(personalInfo, cohort)) {
-            return false;
-        }
-        
-        // Evaluate education level requirements
-        if (!evaluateEducationEligibility(personalInfo, cohort)) {
-            return false;
-        }
-        
-        return true;
-    }
-
-    public String getRejectionReason(Application application, Cohort cohort) {
-        if (cohort == null || application.getPersonalInformation() == null) {
-            return null;
+        // 2. Gender: "if you are a boy... rejected" (Only Females allowed)
+        if (pi.getGender() == Gender.MALE) {
+            return "REJECT: This program is reserved for female applicants.";
         }
 
-        PersonalInformation personalInfo = application.getPersonalInformation();
-        
-        // Check gender restrictions
-        if (!evaluateGenderEligibility(personalInfo, cohort)) {
-            return "Gender does not meet cohort requirements";
+        // 3. Education: "university graduate or in their year"
+        EducationOccupation edu = pi.getEducationOccupation();
+        if (edu == null) return "Missing education information.";
+
+        EducationalLevel level = edu.getHighestEducationLevel();
+        // Assuming Bachelor/Master/PhD are graduates
+        boolean isGraduate = List.of(EducationalLevel.BACHELOR, EducationalLevel.MASTER, EducationalLevel.PHD).contains(level);
+
+        // Check "in their year" (Final year student)
+        boolean isFinalYear = edu.getOccupation() != null &&
+                (edu.getOccupation().toLowerCase().contains("student") ||
+                        edu.getEmploymentStatus().toLowerCase().contains("student"));
+
+        if (!isGraduate && !isFinalYear) {
+            return "REJECT: Must be a university graduate or final year student.";
         }
-        
-        // Check nationality restrictions
-        if (!evaluateNationalityEligibility(personalInfo, cohort)) {
-            return "Nationality is not allowed for this cohort";
+
+        // 4. Coding Basics: "if you dont have basic in coding"
+        // Checking for keywords in their education/occupation description or specific field
+        // Assuming 'highestEducation' field might contain course details
+        String background = (edu.getHighestEducation() + " " + edu.getOccupation()).toLowerCase();
+        boolean hasCodingBasics = background.contains("computer") ||
+                background.contains("software") ||
+                background.contains("it") ||
+                background.contains("code") ||
+                background.contains("tech");
+
+        if (!hasCodingBasics && (edu.getYearsExperience() == null || edu.getYearsExperience() < 1)) {
+            return "REJECT: Basic coding knowledge or IT background is required.";
         }
-        
-        // Check education level requirements
-        if (!evaluateEducationEligibility(personalInfo, cohort)) {
-            return "Education level does not meet cohort requirements";
-        }
-        
-        return null;
-    }
-    
-    private boolean evaluateGenderEligibility(PersonalInformation personalInfo, Cohort cohort) {
-        // If no gender restrictions are set, allow all genders
-        if (cohort.getAllowedGenders() == null || cohort.getAllowedGenders().isEmpty()) {
-            return true;
-        }
-        
-        // If applicant's gender is null, reject
-        if (personalInfo.getGender() == null) {
-            return false;
-        }
-        
-        // Check if applicant's gender is in allowed genders
-        return cohort.getAllowedGenders().contains(personalInfo.getGender());
-    }
-    
-    private boolean evaluateNationalityEligibility(PersonalInformation personalInfo, Cohort cohort) {
-        // If no nationality restrictions are set, allow all nationalities
-        if (cohort.getAllowedNationalities() == null || cohort.getAllowedNationalities().isEmpty()) {
-            return true;
-        }
-        
-        // If applicant's nationality is null or empty, reject
-        if (personalInfo.getNationality() == null || personalInfo.getNationality().trim().isEmpty()) {
-            return false;
-        }
-        
-        // Check if applicant's nationality is in allowed nationalities (case-insensitive)
-        return cohort.getAllowedNationalities().stream()
-                .anyMatch(allowedNationality -> 
-                    allowedNationality.equalsIgnoreCase(personalInfo.getNationality().trim()));
-    }
-    
-    private boolean evaluateEducationEligibility(PersonalInformation personalInfo, Cohort cohort) {
-        // If no education level requirements are set, allow all education levels
-        if (cohort.getRequiredEducationLevels() == null || cohort.getRequiredEducationLevels().isEmpty()) {
-            return true;
-        }
-        
-        // If applicant has no education information, reject
-        EducationOccupation education = personalInfo.getEducationOccupation();
-        if (education == null || education.getHighestEducationLevel() == null) {
-            return false;
-        }
-        
-        // Check if applicant's education level meets the minimum requirements
-        return cohort.getRequiredEducationLevels().contains(education.getHighestEducationLevel());
+
+        return null; // Passed Gate 1
     }
 }

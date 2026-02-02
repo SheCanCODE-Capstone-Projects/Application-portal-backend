@@ -4,10 +4,13 @@ import com.igirerwanda.application_portal_backend.application.dto.*;
 import com.igirerwanda.application_portal_backend.application.entity.*;
 import com.igirerwanda.application_portal_backend.application.repository.*;
 import com.igirerwanda.application_portal_backend.cohort.entity.Cohort;
+import com.igirerwanda.application_portal_backend.cohort.service.CohortRuleService;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
 import com.igirerwanda.application_portal_backend.common.exception.ResourceNotFoundException;
 import com.igirerwanda.application_portal_backend.common.exception.ValidationException;
+import com.igirerwanda.application_portal_backend.me.service.MasterDataService;
+import com.igirerwanda.application_portal_backend.notification.service.NotificationService;
 import com.igirerwanda.application_portal_backend.notification.service.WebSocketService;
 import com.igirerwanda.application_portal_backend.user.entity.User;
 import com.igirerwanda.application_portal_backend.user.service.UserService;
@@ -15,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,6 +44,10 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     private final ApplicationValidationService applicationValidationService;
     private final SystemRejectionService systemRejectionService;
     private final WebSocketService webSocketService;
+
+    private final CohortRuleService cohortRuleService;
+    private final MasterDataService masterDataService;
+    private final NotificationService notificationService;
 
     @Override
     public ApplicationDto startApplicationForUser(UUID registerId) {
@@ -208,9 +216,12 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApplicationDto getApplicationForUser(UUID userId) {
-        Application application = applicationRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("No application found for user with ID: " + userId));
+    public ApplicationDto getApplicationForUser(UUID registerId) {
+        User user = userService.findByRegisterId(registerId);
+
+        Application application = applicationRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("No application found for user"));
+
         return mapToDto(application);
     }
 
@@ -218,36 +229,60 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     public ApplicationSubmissionResponseDto submitApplication(UUID appId, UUID registerId) {
         Application app = getOwnedApplication(appId, registerId);
 
+        // 1. Validation (Using the previously unused field)
         applicationValidationService.validateForSubmission(app);
-        systemRejectionService.evaluateAndRejectIfNeeded(app);
 
-        if (app.getStatus() == ApplicationStatus.SYSTEM_REJECTED) {
-            return ApplicationSubmissionResponseDto.systemRejected(
-                    app.getSystemRejectionReason(),
-                    mapToDto(app)
-            );
+        // 2. GATE 1: Demographic & Education Rules
+        String rejectionReason = cohortRuleService.evaluateApplication(app, app.getCohort());
+        if (rejectionReason != null) {
+            return rejectApplication(app, rejectionReason);
         }
 
+        // 3. GATE 2: Master Data Synchronization Check
+        if (masterDataService.isUserInMasterDatabase(app.getPersonalInformation())) {
+            return rejectApplication(app, "Duplicate Entry: Applicant exists in Master Database.");
+        }
+
+        // 4. Success Path
         app.setStatus(ApplicationStatus.SUBMITTED);
         app.setSubmittedAt(LocalDateTime.now());
+        app.setSystemRejected(false);
+        app.setSystemRejectionReason(null);
+
         Application savedApp = applicationRepository.save(app);
 
-        webSocketService.broadcastApplicationUpdate(Map.of(
-                "event", "APPLICATION_SUBMITTED",
-                "applicationId", savedApp.getId().toString(),
-                "userId", savedApp.getUser().getId().toString(),
-                "status", ApplicationStatus.SUBMITTED,
-                "submittedAt", savedApp.getSubmittedAt().toString()
-        ));
-
-        webSocketService.broadcastToAdmin("applications", Map.of(
-                "event", "NEW_SUBMISSION",
-                "applicationId", savedApp.getId().toString(),
-                "applicantName", savedApp.getPersonalInformation() != null ?
-                        savedApp.getPersonalInformation().getFullName() : "Unknown"
-        ));
+        // Notify
+        notificationService.sendApplicationSubmittedNotification(savedApp);
 
         return ApplicationSubmissionResponseDto.submitted(mapToDto(savedApp));
+    }
+
+    private ApplicationSubmissionResponseDto rejectApplication(Application app, String reason) {
+        // Update Internal Status
+        app.setStatus(ApplicationStatus.SYSTEM_REJECTED);
+        app.setSystemRejected(true);
+        app.setSystemRejectionReason(reason); // Reason stored for Admin
+        app.setSubmittedAt(LocalDateTime.now());
+
+        Application saved = applicationRepository.save(app);
+
+        // Notify (Generic message to user, specific details hidden)
+        // We do NOT send "You are rejected because X" to the user here if you want to hide it.
+        // Instead, we might just say, "Application Submitted" but flag it internally.
+        // However, usually "System Reject" is immediate feedback.
+
+        // Requirement: "show the admin not the applicant"
+        // We will return a DTO where rejectionReason is NULL for the applicant response
+
+        ApplicationDto appDto = mapToDto(saved);
+
+        // Return a response that looks like a submission, or a generic "Under Review"
+        // But with the internal status set to SYSTEM_REJECTED
+        return new ApplicationSubmissionResponseDto(
+                ApplicationStatus.SYSTEM_REJECTED,
+                "Your application is under review.", // Generic message for user
+                appDto
+        );
     }
 
     @Override
@@ -339,6 +374,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         dto.setStatus(app.getStatus());
         dto.setSystemRejected(app.isSystemRejected());
         dto.setSystemRejectionReason(app.getSystemRejectionReason());
+        dto.setSystemRejected(app.isSystemRejected());
 
         if (app.getCohort() != null) {
             dto.setCohortId(app.getCohort().getId());

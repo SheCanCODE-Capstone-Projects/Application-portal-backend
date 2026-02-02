@@ -12,6 +12,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 @RequiredArgsConstructor
@@ -20,6 +21,12 @@ public class AdminSeeder implements CommandLineRunner {
     private final RegisterRepository registerRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.admin.bootstrap.email}")
+    private String adminEmail;
+
+    @Value("${app.admin.bootstrap.password}")
+    private String bootstrapPassword;
 
     @Override
     @Transactional
@@ -30,9 +37,9 @@ public class AdminSeeder implements CommandLineRunner {
         }
 
         Register register = new Register();
-        register.setEmail("admin@portal.com");
+        register.setEmail(adminEmail);
         register.setUsername("admin");
-        register.setPassword(passwordEncoder.encode("admin123"));
+        register.setPassword(passwordEncoder.encode(bootstrapPassword));
         register.setRole(UserRole.ADMIN);
         register.setVerified(true);
         register.setProvider(AuthProvider.LOCAL);
@@ -45,6 +52,6 @@ public class AdminSeeder implements CommandLineRunner {
 
         userRepository.save(user);
 
-        System.out.println("✅ Admin user created successfully");
+        System.out.println("Admin user created successfully");
     }
 }

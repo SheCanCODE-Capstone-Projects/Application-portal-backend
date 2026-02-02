@@ -22,8 +22,9 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<Object> handleNotFound(NotFoundException ex, WebRequest request) {
+
+    @ExceptionHandler({NotFoundException.class, ResourceNotFoundException.class})
+    public ResponseEntity<Object> handleNotFound(RuntimeException ex, WebRequest request) {
         log.warn("Resource not found: {}", ex.getMessage());
         return build(HttpStatus.NOT_FOUND, "Resource not found", ex.getMessage(), request.getDescription(false));
     }

@@ -22,11 +22,13 @@ public class SystemRejectionService {
     public void evaluateAndRejectIfNeeded(Application application) {
         if (application.getCohort() == null) return;
 
-        boolean meetsRequirements = cohortRuleService.evaluateApplication(application, application.getCohort());
+        // FIX: Capture the String result directly
+        String rejectionReason = cohortRuleService.evaluateApplication(application, application.getCohort());
 
-        if (!meetsRequirements) {
+        // If rejectionReason is NOT null, it means the application failed the rules
+        if (rejectionReason != null) {
             application.setStatus(ApplicationStatus.SYSTEM_REJECTED);
-            application.setSystemRejectionReason(cohortRuleService.getRejectionReason(application, application.getCohort()));
+            application.setSystemRejectionReason(rejectionReason); // Use the returned reason
             application.setSystemRejected(true);
             applicationRepository.save(application);
         }

@@ -29,7 +29,7 @@ public class AuthController {
         // Refresh Token: HttpOnly, Secure, 7 Days
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(false) // Set true in production (HTTPS)
+                .secure(true) // Set true in production (HTTPS)
                 .sameSite("Strict")
                 .path("/api/v1/auth/refresh-token") // Limit scope
                 .maxAge(Duration.ofDays(7))
@@ -38,7 +38,7 @@ public class AuthController {
         // Access Token: HttpOnly, Secure, 15 Minutes
         ResponseCookie accessCookie = ResponseCookie.from("access_token", accessToken)
                 .httpOnly(true)
-                .secure(false) // Set true in production
+                .secure(true) // Set true in production
                 .sameSite("Strict")
                 .path("/")
                 .maxAge(Duration.ofMinutes(15))
@@ -71,15 +71,11 @@ public class AuthController {
 
         LoginResponse loginResponse = authService.login(request);
 
-        // Set Cookies (for Browser/Swagger auto-pickup)
         setTokenCookies(response, loginResponse.getAccessToken(), loginResponse.getRefreshToken());
 
-        // Return Tokens in Body (so you can see them to copy-paste if needed)
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("message", "Login successful");
         responseBody.put("expiresIn", loginResponse.getExpiresIn());
-        responseBody.put("accessToken", loginResponse.getAccessToken()); // Added
-        responseBody.put("refreshToken", loginResponse.getRefreshToken()); // Added
 
         return ResponseEntity.ok(responseBody);
     }
@@ -107,6 +103,16 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of("message", "Token refreshed successfully"));
     }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<?> resendVerification(
+            @RequestBody ResendVerificationRequest request) {
+
+        return ResponseEntity.ok(
+                authService.resendVerification(request.getEmail())
+        );
+    }
+
 
     @PostMapping("/forgot")
     public ResponseEntity<?> forgot(@RequestBody PasswordResetRequest request, HttpServletRequest servletRequest) {

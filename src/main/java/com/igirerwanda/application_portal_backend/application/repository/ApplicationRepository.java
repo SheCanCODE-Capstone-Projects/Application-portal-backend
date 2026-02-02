@@ -29,4 +29,6 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
 
     @Query("SELECT a FROM Application a WHERE a.id = :id AND a.deleted = false")
     Optional<Application> findByIdActive(UUID id);
+
+    Object countByStatus(ApplicationStatus applicationStatus);
 }

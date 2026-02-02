@@ -21,7 +21,7 @@ public class JwtService {
     private final long accessTokenExpiration;
     private final long refreshTokenExpiration;
 
-    // Use Constructor Injection to ensure values are read from application.properties
+
     public JwtService(
             @Value("${jwt.secret}") String secretKey,
             @Value("${jwt.access.token.expiration}") long accessTokenExpiration,

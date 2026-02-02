@@ -70,7 +70,7 @@ public class ApplicationControllerTest {
         infoDto.setFullName("Test User");
 
         ApplicationDto response = new ApplicationDto();
-        response.setId(appId);
+        response.setId(appUUID);
 
         when(userApplicationService.savePersonalInfo(eq(appId), any(), any(PersonalInfoDto.class)))
                 .thenReturn(response);
