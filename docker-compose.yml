@@ -19,7 +19,6 @@ services:
     networks:
       - app-network
 
-
   # NEW: Master Database
   master-db:
     image: postgres:15
@@ -66,13 +65,11 @@ services:
       - "8085:${BACKEND_PORT}"
     networks:
       - app-network
-
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 10s
       timeout: 5s
       retries: 5
-
 
 networks:
   app-network:
@@ -80,3 +77,4 @@ networks:
 
 volumes:
   postgres_data:
+  master_db_data:  # ADDED THIS LINE TO FIX THE ERROR
