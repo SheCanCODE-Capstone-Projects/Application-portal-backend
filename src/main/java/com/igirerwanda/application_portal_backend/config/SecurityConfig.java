@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpMethod; // Import this
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -41,9 +41,9 @@ public class SecurityConfig {
         this.environment = environment;
     }
 
+    // FIXED: Made static to break circular dependency
     @Bean
-    public PasswordEncoder passwordEncoder() {
-
+    public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -52,14 +52,12 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         boolean isDevOrStaging = Arrays.stream(environment.getActiveProfiles())
-                        .anyMatch(p -> p.equalsIgnoreCase("dev") || p.equalsIgnoreCase("staging"));
+                .anyMatch(p -> p.equalsIgnoreCase("dev") || p.equalsIgnoreCase("staging"));
 
         if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
-
             configuration.setAllowedOrigins(allowedOrigins);
             configuration.setAllowCredentials(true);
         } else if (isDevOrStaging) {
-
             configuration.setAllowedOriginPatterns(
                     List.of("http://localhost:3000")
             );
@@ -93,7 +91,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/api/v1/auth/**",
                                 "/api/v1/auth/google/**",
-                                "/login/oauth2/code/**"
+                                "/login/oauth2/code/**",
+                                "/ws/**" // Ensure WebSocket endpoint is allowed publicly for handshake
                         ).permitAll()
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

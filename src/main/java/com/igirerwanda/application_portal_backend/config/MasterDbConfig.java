@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import jakarta.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
-import java.util.HashMap; // <--- ADD THIS
-import java.util.Map;     // <--- ADD THIS
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableTransactionManagement
@@ -37,15 +37,20 @@ public class MasterDbConfig {
             EntityManagerFactoryBuilder builder,
             @Qualifier("masterDataSource") DataSource dataSource) {
 
-        // ADD THIS MAP
         Map<String, Object> properties = new HashMap<>();
+
+        // 1. Fix Naming Strategy (so camelCase becomes snake_case)
         properties.put("hibernate.physical_naming_strategy", "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy");
         properties.put("hibernate.implicit_naming_strategy", "org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy");
+
+        // 2. THIS IS THE MISSING LINE FIXING YOUR ERROR
+        // It tells Hibernate to create the table 'master_beneficiaries' automatically
+        properties.put("hibernate.hbm2ddl.auto", "update");
 
         return builder
                 .dataSource(dataSource)
                 .packages("com.igirerwanda.application_portal_backend.me.entity")
-                .properties(properties) // <--- APPLY HERE
+                .properties(properties)
                 .persistenceUnit("master")
                 .build();
     }

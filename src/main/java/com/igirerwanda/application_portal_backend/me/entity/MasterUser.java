@@ -8,7 +8,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "master_beneficiaries", indexes = {
         @Index(name = "idx_master_phone", columnList = "phoneNumber"),
-        @Index(name = "idx_master_nid", columnList = "originSystemId")
+        @Index(name = "idx_master_nid", columnList = "origin_id") // FIXED: Use actual DB column name
 })
 @Data
 public class MasterUser {
@@ -22,18 +22,14 @@ public class MasterUser {
     @Column(unique = true, nullable = false)
     private String phoneNumber;
 
-
     @Column(name = "origin_id")
     private String originSystemId;
-
 
     @Column(name = "origin_system")
     private String originSystem;
 
-
     @Column(name = "cohort_joined")
     private String cohortJoined;
-
 
     @Column(name = "application_date")
     private LocalDateTime applicationDate;
