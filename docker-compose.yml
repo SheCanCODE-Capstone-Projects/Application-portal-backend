@@ -19,36 +19,49 @@ services:
     networks:
       - app-network
 
-
-  # NEW: Master Database
   master-db:
     image: postgres:15
     container_name: portal-master-db
     restart: unless-stopped
+    env_file: .env
     environment:
-      POSTGRES_DB: master_data_db
-      POSTGRES_USER: master_user
-      POSTGRES_PASSWORD: master_password
+      # FIX: Use the actual database name variable, not the full JDBC URL
+      POSTGRES_DB: ${master_data_db}
+      POSTGRES_USER: ${master_user}
+      POSTGRES_PASSWORD: ${master_password}
     volumes:
       - master_db_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432" # Different port to avoid conflict
+      - "5433:5432"
     networks:
       - app-network
 
   backend:
+    build: .
     image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
     container_name: portal-backend
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
+      master-db:
+        # We add a dependency on master-db so it starts before the backend
+        condition: service_started
     env_file: .env
     environment:
-      # Overriding properties to force Docker Networking
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      # FIX: Override the Primary DB URL to use the 'postgres' service name
+      # We use SPRING_DATASOURCE_JDBC_URL to strictly match the application.properties key
+      SPRING_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # FIX: Override the Master DB configuration
+      # 1. Point to 'master-db' service name (not localhost)
+      # 2. Use port 5432 (internal container port)
+      # 3. Use the specific db name variable
+      MASTER_DATASOURCE_URL: jdbc:postgresql://master-db:5432/${master_data_db}
+      MASTER_DATASOURCE_USERNAME: ${master_user}
+      MASTER_DATASOURCE_PASSWORD: ${master_password}
 
       # Security & Config
       JWT_SECRET: ${JWT_SECRET}
@@ -66,13 +79,11 @@ services:
       - "8085:${BACKEND_PORT}"
     networks:
       - app-network
-
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 10s
       timeout: 5s
       retries: 5
-
 
 networks:
   app-network:
@@ -80,3 +91,4 @@ networks:
 
 volumes:
   postgres_data:
+  master_db_data:

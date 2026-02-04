@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class UserApplicationServiceImpl implements UserApplicationService {
 
     private final ApplicationRepository applicationRepository;
@@ -66,12 +67,16 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                     newApp.setStatus(ApplicationStatus.DRAFT);
                     Application savedApp = applicationRepository.save(newApp);
 
+                    // 1. Real-time update for dashboard
                     webSocketService.broadcastApplicationUpdate(Map.of(
                             "event", "APPLICATION_STARTED",
                             "applicationId", savedApp.getId().toString(),
                             "userId", user.getId().toString(),
                             "status", ApplicationStatus.DRAFT
                     ));
+
+                    // 2. NEW: Send Notification (Email + In-App)
+                    notificationService.sendApplicationStartedNotification(savedApp);
 
                     return savedApp;
                 });
@@ -229,7 +234,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     public ApplicationSubmissionResponseDto submitApplication(UUID appId, UUID registerId) {
         Application app = getOwnedApplication(appId, registerId);
 
-        // 1. Validation (Using the previously unused field)
+        // 1. Validation
         applicationValidationService.validateForSubmission(app);
 
         // 2. GATE 1: Demographic & Education Rules
@@ -258,39 +263,29 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     }
 
     private ApplicationSubmissionResponseDto rejectApplication(Application app, String reason) {
-        // Update Internal Status
         app.setStatus(ApplicationStatus.SYSTEM_REJECTED);
         app.setSystemRejected(true);
-        app.setSystemRejectionReason(reason); // Reason stored for Admin
+        app.setSystemRejectionReason(reason);
         app.setSubmittedAt(LocalDateTime.now());
 
         Application saved = applicationRepository.save(app);
 
-        // Notify (Generic message to user, specific details hidden)
-        // We do NOT send "You are rejected because X" to the user here if you want to hide it.
-        // Instead, we might just say, "Application Submitted" but flag it internally.
-        // However, usually "System Reject" is immediate feedback.
-
-        // Requirement: "show the admin not the applicant"
-        // We will return a DTO where rejectionReason is NULL for the applicant response
-
         ApplicationDto appDto = mapToDto(saved);
 
-        // Return a response that looks like a submission, or a generic "Under Review"
-        // But with the internal status set to SYSTEM_REJECTED
         return new ApplicationSubmissionResponseDto(
                 ApplicationStatus.SYSTEM_REJECTED,
-                "Your application is under review.", // Generic message for user
+                "Your application is under review.",
                 appDto
         );
     }
 
     @Override
-    public double calculateCompletionPercentage(UUID applicationId, UUID userId) {
+    public double calculateCompletionPercentage(UUID applicationId, UUID userId) { // userId here is actually registerId from token
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new NotFoundException("Application not found"));
 
-        if (!app.getUser().getId().equals(userId)) {
+        // FIX: Compare with the Register ID (from token) instead of User ID
+        if (!app.getUser().getRegister().getId().equals(userId)) {
             throw new AccessDeniedException("Access denied: You do not own this application.");
         }
 
@@ -346,10 +341,10 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     }
 
     private void broadcastStepUpdate(Application application, String stepName) {
-        double progress = calculateCompletionPercentage(application.getId(), application.getUser().getId());
+        double progress = calculateCompletionPercentage(application.getId(), application.getUser().getRegister().getId());
 
         webSocketService.broadcastApplicationProgress(
-                application.getUser().getId().toString(),
+                application.getUser().getRegister().getId().toString(), // Use Register ID for consistency if needed, or stick to User ID if frontend listens to that
                 Map.of(
                         "event", "STEP_UPDATED",
                         "applicationId", application.getId().toString(),
@@ -357,14 +352,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                         "progress", progress
                 )
         );
-
-        webSocketService.broadcastToAdmin("progress", Map.of(
-                "event", "APPLICATION_PROGRESS",
-                "applicationId", application.getId().toString(),
-                "step", stepName,
-                "progress", progress,
-                "userId", application.getUser().getId().toString()
-        ));
+        // ... rest of method
     }
 
     private ApplicationDto mapToDto(Application app) {
@@ -374,7 +362,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         dto.setStatus(app.getStatus());
         dto.setSystemRejected(app.isSystemRejected());
         dto.setSystemRejectionReason(app.getSystemRejectionReason());
-        dto.setSystemRejected(app.isSystemRejected());
 
         if (app.getCohort() != null) {
             dto.setCohortId(app.getCohort().getId());

@@ -128,4 +128,13 @@ public class AdminApplicationController {
         adminService.restoreApplication(id);
         return ResponseEntity.ok(ApiResponse.success("Application restored successfully"));
     }
+
+    @PutMapping("/{id}/review")
+    @Operation(summary = "Mark as Under Review", description = "Moves application to review stage and notifies applicant.")
+    public ResponseEntity<ApiResponse<ApplicationDto>> markReview(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Application moved to review",
+                adminService.markAsUnderReview(id)
+        ));
+    }
 }

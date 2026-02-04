@@ -18,8 +18,11 @@ public interface AdminApplicationService {
     ApplicationDto acceptApplication(UUID applicationId);
     ApplicationDto rejectApplication(UUID applicationId);
     ApplicationDto scheduleInterview(UUID applicationId, InterviewScheduleRequest request);
+    ApplicationDto markAsUnderReview(UUID applicationId);
+
 
     void softDeleteApplication(UUID applicationId);
     void archiveApplication(UUID applicationId);
     void restoreApplication(UUID applicationId);
+
 }

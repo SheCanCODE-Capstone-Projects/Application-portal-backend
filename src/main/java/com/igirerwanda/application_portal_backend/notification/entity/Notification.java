@@ -43,11 +43,11 @@ public class Notification {
 
     private LocalDateTime readAt;
 
-    // Application-related fields
-    private UUID applicationId; // Changed to UUID
+    private UUID applicationId;
     private String applicationStatus;
 
     public enum NotificationType {
+        APPLICATION_STARTED,       // NEW
         APPLICATION_SUBMITTED,
         APPLICATION_UNDER_REVIEW,
         APPLICATION_ACCEPTED,

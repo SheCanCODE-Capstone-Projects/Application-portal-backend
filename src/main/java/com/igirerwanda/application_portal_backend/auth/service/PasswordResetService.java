@@ -8,6 +8,7 @@ import com.igirerwanda.application_portal_backend.auth.repository.RegisterReposi
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
 import com.igirerwanda.application_portal_backend.common.exception.ValidationException;
 import com.igirerwanda.application_portal_backend.notification.service.EmailService;
+import org.springframework.beans.factory.annotation.Value; // Import added
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,10 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository tokenRepo;
     private final PasswordEncoder encoder;
     private final EmailService emailService;
+
+    // Inject Frontend URL
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
 
     private static final int MAX_RESET_REQUESTS = 3;
 
@@ -65,8 +70,9 @@ public class PasswordResetService {
 
         tokenRepo.save(token);
 
-        String resetLink =
-                "http://localhost:8080/api/v1/auth/reset-password?token=" + token.getToken();
+        // FIXED: Use frontend URL and Path Parameter
+        String baseUrl = frontendBaseUrl.endsWith("/") ? frontendBaseUrl : frontendBaseUrl + "/";
+        String resetLink = baseUrl + "reset-password/" + token.getToken();
 
         emailService.sendEmail(
                 user.getEmail(),
@@ -94,4 +100,3 @@ public class PasswordResetService {
         tokenRepo.delete(token);
     }
 }
-

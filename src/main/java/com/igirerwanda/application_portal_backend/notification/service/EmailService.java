@@ -73,11 +73,13 @@ public class EmailService {
     }
 
     public void sendVerificationEmail(Register user, String token) {
+        // Ensure base URL ends with /
         String baseUrl = frontendBaseUrl.endsWith("/")
                 ? frontendBaseUrl
                 : frontendBaseUrl + "/";
 
-        String link = baseUrl + "verify-email?token=" + token;
+        // FIXED: Changed from "?token=" to direct path "/"
+        String link = baseUrl + "verify-email/" + token;
 
         String html = """
                 <html>
