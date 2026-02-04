@@ -28,7 +28,7 @@ public class AdminDashboardController {
 
     @GetMapping("/stats")
     public ResponseEntity<?> getStats() {
-        // 1. Basic Counts
+
         long totalApplicants = applicationRepo.count();
         long activeCohorts = cohortRepo.count();
         long systemRejects = applicationRepo.countByIsSystemRejectedTrue();
@@ -66,12 +66,15 @@ public class AdminDashboardController {
             cohortBreakdown.add(item);
         });
 
+        String rejectsTrend = (totalApplicants == 0)
+                               ? "0% Rate"
+                              : Math.round((double) systemRejects / totalApplicants * 100) + "% Rate";
         return ResponseEntity.ok(Map.of("data", Map.of(
                 "totalApplicants", totalApplicants,
                 "activeCohorts", activeCohorts,
                 "systemRejects", systemRejects,
                 "successfulRegisters", successfulRegisters,
-                "duplicateRejections", duplicateApplications, // "One who applied twice"
+                "duplicateRejections", duplicateApplications,
                 "charts", Map.of(
                         "dailyTrend", dailyTrend,
                         "cohortBreakdown", cohortBreakdown
@@ -79,7 +82,7 @@ public class AdminDashboardController {
                 "trends", Map.of(
                         "applicants", "+5%",
                         "cohorts", "Active",
-                        "rejects", Math.round((double)systemRejects/totalApplicants * 100) + "% Rate",
+                        "rejects", rejectsTrend,
                         "registers", "Total Users"
                 )
         )));
