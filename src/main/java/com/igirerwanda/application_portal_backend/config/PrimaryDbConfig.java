@@ -48,10 +48,12 @@ public class PrimaryDbConfig {
             EntityManagerFactoryBuilder builder,
             @Qualifier("primaryDataSource") DataSource dataSource) {
 
-        // ADD THIS MAP TO FIX THE NAMING STRATEGY
+
         Map<String, Object> properties = new HashMap<>();
         properties.put("hibernate.physical_naming_strategy", "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy");
         properties.put("hibernate.implicit_naming_strategy", "org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy");
+
+        properties.put("hibernate.hbm2ddl.auto", "update");
 
         return builder
                 .dataSource(dataSource)
@@ -64,7 +66,7 @@ public class PrimaryDbConfig {
                         "com.igirerwanda.application_portal_backend.review.entity",
                         "com.igirerwanda.application_portal_backend.user.entity"
                 )
-                .properties(properties) // <--- APPLY PROPERTIES HERE
+                .properties(properties)
                 .persistenceUnit("primary")
                 .build();
     }
