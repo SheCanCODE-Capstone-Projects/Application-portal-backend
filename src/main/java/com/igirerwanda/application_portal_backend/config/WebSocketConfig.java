@@ -57,28 +57,33 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String authHeader = accessor.getFirstNativeHeader("Authorization");
 
-                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                        String token = authHeader.substring(7);
-                        try {
-                            // Fix 2: Changed extractUsername -> extractEmail
-                            String userEmail = jwtService.extractEmail(token);
+                    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                                                log.warn("WebSocket Auth Failed: Missing Authorization header");
+                                               return null;
+                                            }
 
-                            if (userEmail != null) {
-                                UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+                    String token = authHeader.substring(7);
+                                        try {
+                                                String userEmail = jwtService.extractEmail(token);
+                                                if (userEmail == null) {
+                                                        log.warn("WebSocket Auth Failed: Missing email claim");
+                                                        return null;
+                                                    }
 
-                                if (jwtService.isTokenValid(token, userDetails)) {
-                                    UsernamePasswordAuthenticationToken authToken =
-                                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                                                UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+                                              if (!jwtService.isTokenValid(token, userDetails)) {
+                                                  log.warn("WebSocket Auth Failed: Invalid token");
+                                                     return null;
+                                                    }
 
-                                    accessor.setUser(authToken);
-                                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                                    log.info("WebSocket Connected: {}", userEmail);
-                                }
-                            }
-                        } catch (Exception e) {
-                            log.error("WebSocket Auth Failed: {}", e.getMessage());
-                        }
-                    }
+                                              UsernamePasswordAuthenticationToken authToken =
+                                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                              accessor.setUser(authToken);
+                                               log.info("WebSocket Connected: {}", userEmail);
+                                           } catch (Exception e) {
+                                                log.error("WebSocket Auth Failed: {}", e.getMessage());
+                                                return null;
+                                            }
                 }
                 return message;
             }

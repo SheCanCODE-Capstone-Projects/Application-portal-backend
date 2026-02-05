@@ -71,7 +71,12 @@ public class PasswordResetService {
         tokenRepo.save(token);
 
         // FIXED: Use frontend URL and Path Parameter
-        String baseUrl = frontendBaseUrl.endsWith("/") ? frontendBaseUrl : frontendBaseUrl + "/";
+        if (frontendBaseUrl == null || frontendBaseUrl.trim().isEmpty()) {
+                        throw new IllegalStateException("app.frontend.base-url must be configured");
+                    }
+              String baseUrl = frontendBaseUrl.trim();
+
+        baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
         String resetLink = baseUrl + "reset-password/" + token.getToken();
 
         emailService.sendEmail(

@@ -11,6 +11,7 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.beans.factory.annotation.Value;
 
 import jakarta.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
@@ -25,6 +26,10 @@ import java.util.Map;
         transactionManagerRef = "masterTransactionManager"
 )
 public class MasterDbConfig {
+
+
+    @Value ("${spring.jpa.hibernate.ddl-auto:validate}")
+    private String ddlAuto;
 
     @Bean(name = "masterDataSource")
     @ConfigurationProperties(prefix = "spring.datasource.master")
@@ -45,7 +50,7 @@ public class MasterDbConfig {
 
         // 2. THIS IS THE MISSING LINE FIXING YOUR ERROR
         // It tells Hibernate to create the table 'master_beneficiaries' automatically
-        properties.put("hibernate.hbm2ddl.auto", "update");
+        properties.put("hibernate.hbm2ddl.auto", ddlAuto);
 
         return builder
                 .dataSource(dataSource)
