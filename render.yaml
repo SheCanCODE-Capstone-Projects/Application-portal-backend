@@ -1,0 +1,68 @@
+services:
+  - type: web
+    name: application-portal-backend
+    runtime: docker
+    region: frankfurt
+    plan: free
+    branch: main
+    rootDir: Application-portal-backend
+
+    # Health Check
+    healthCheckPath: /actuator/health
+
+    # Environment Variables
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SERVER_PORT
+        value: 8080
+
+      # --- Primary Database Config ---
+      - key: SPRING_DATASOURCE_JDBC_URL
+        value: jdbc:postgresql://pg-13fee446-derrickmugisha169-4535.h.aivencloud.com:28547/defaultdb?sslmode=require
+      - key: SPRING_DATASOURCE_USERNAME
+        value: avnadmin
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      # CRITICAL FIX: Limit Primary DB connections to 2
+      - key: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+        value: "2"
+
+      # --- Master Database Config ---
+      - key: MASTER_DATASOURCE_URL
+        value: jdbc:postgresql://master-data-base-igirerwanda-5b57.i.aivencloud.com:13488/defaultdb?sslmode=require
+      - key: MASTER_DATASOURCE_USERNAME
+        value: avnadmin
+      - key: MASTER_DATASOURCE_PASSWORD
+        sync: false
+      # CRITICAL FIX: Limit Master DB connections to 2
+      - key: SPRING_DATASOURCE_MASTER_HIKARI_MAXIMUM_POOL_SIZE
+        value: "2"
+
+      # --- Secrets (Manual Entry in Dashboard) ---
+      - key: JWT_SECRET
+        sync: false
+      - key: APP_ADMIN_BOOTSTRAP_PASSWORD
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+
+      # --- App Config ---
+      - key: MAIL_FROM_ADDRESS
+        value: derrickmugisha169@gmail.com
+      - key: MAIL_USERNAME
+        value: "Application Portal"
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://application-portal-frontend-chi.vercel.app
+      - key: FRONTEND_BASE_URL
+        value: https://application-portal-frontend-chi.vercel.app
+
+      # --- Optimization & Safety ---
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: validate
+      - key: SPRING_MAIN_LAZY_INITIALIZATION
+        value: "false"

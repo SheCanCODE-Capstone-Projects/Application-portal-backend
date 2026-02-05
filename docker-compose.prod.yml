@@ -1,0 +1,41 @@
+services:
+  backend:
+    # Use your image name. If you want to rebuild locally, keep 'build: .'
+    image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+    build: .
+    container_name: portal-backend-prod
+    restart: always
+    env_file: .env.prod
+    environment:
+      # Explicitly override the JDBC URLs for Spring Boot
+      SPRING_DATASOURCE_JDBC_URL: ${SPRING_DATASOURCE_JDBC_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
+
+      # Master DB Config
+      # Note: We pass this to the variable your application.properties expects
+      MASTER_DATASOURCE_URL: ${MASTER_DATASOURCE_URL}
+      MASTER_DATASOURCE_USERNAME: ${MASTER_DATASOURCE_USERNAME}
+      MASTER_DATASOURCE_PASSWORD: ${MASTER_DATASOURCE_PASSWORD}
+
+      # Pass through other keys
+      JWT_SECRET: ${JWT_SECRET}
+      APP_ADMIN_BOOTSTRAP_PASSWORD: ${APP_ADMIN_BOOTSTRAP_PASSWORD}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      BREVO_API_KEY: ${BREVO_API_KEY}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+
+    ports:
+      # Maps machine port 80 to container port 8080
+      - "80:8080"
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
