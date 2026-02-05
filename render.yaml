@@ -24,9 +24,13 @@ services:
         value: avnadmin
       - key: SPRING_DATASOURCE_PASSWORD
         sync: false
-      # CRITICAL FIX: Limit Primary DB connections to 2
-      - key: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+
+      # FIX: Removed _HIKARI so it binds directly to your DataSource bean
+      - key: SPRING_DATASOURCE_MAXIMUM_POOL_SIZE
         value: "2"
+      # RECOMMENDED: Start with 0 connections to avoid timeouts during startup
+      - key: SPRING_DATASOURCE_MINIMUM_IDLE
+        value: "0"
 
       # --- Master Database Config ---
       - key: MASTER_DATASOURCE_URL
@@ -35,9 +39,12 @@ services:
         value: avnadmin
       - key: MASTER_DATASOURCE_PASSWORD
         sync: false
-      # CRITICAL FIX: Limit Master DB connections to 2
-      - key: SPRING_DATASOURCE_MASTER_HIKARI_MAXIMUM_POOL_SIZE
+
+      # FIX: Removed _HIKARI
+      - key: SPRING_DATASOURCE_MASTER_MAXIMUM_POOL_SIZE
         value: "2"
+      - key: SPRING_DATASOURCE_MASTER_MINIMUM_IDLE
+        value: "0"
 
       # --- Secrets (Manual Entry in Dashboard) ---
       - key: JWT_SECRET
