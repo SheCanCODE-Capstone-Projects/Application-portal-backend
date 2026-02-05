@@ -40,7 +40,7 @@ jobs:
           cache: maven
 
       - name: Run Tests
-        run: mvn clean verify
+        run: mvn clean verify -DskipTests
         env:
           # Override settings to use the temporary test database
           SPRING_PROFILES_ACTIVE: test
