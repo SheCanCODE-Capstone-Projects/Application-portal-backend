@@ -25,12 +25,14 @@ services:
       - key: SPRING_DATASOURCE_PASSWORD
         sync: false
 
-      # FIX: Removed _HIKARI so it binds directly to your DataSource bean
-      - key: SPRING_DATASOURCE_MAXIMUM_POOL_SIZE
-        value: "2"
-      # RECOMMENDED: Start with 0 connections to avoid timeouts during startup
-      - key: SPRING_DATASOURCE_MINIMUM_IDLE
+      # CRITICAL FIX: Ultra-low connection limits for free-tier database
+      # Total connections across BOTH databases must be <= 3
+      - key: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+        value: "1"
+      - key: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
         value: "0"
+      - key: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
+        value: "60000"
 
       # --- Master Database Config ---
       - key: MASTER_DATASOURCE_URL
@@ -40,11 +42,13 @@ services:
       - key: MASTER_DATASOURCE_PASSWORD
         sync: false
 
-      # FIX: Removed _HIKARI
-      - key: SPRING_DATASOURCE_MASTER_MAXIMUM_POOL_SIZE
-        value: "2"
-      - key: SPRING_DATASOURCE_MASTER_MINIMUM_IDLE
+      # CRITICAL: Master DB also needs minimal connections
+      - key: MASTER_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+        value: "1"
+      - key: MASTER_DATASOURCE_HIKARI_MINIMUM_IDLE
         value: "0"
+      - key: MASTER_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
+        value: "60000"
 
       # --- Secrets (Manual Entry in Dashboard) ---
       - key: JWT_SECRET
