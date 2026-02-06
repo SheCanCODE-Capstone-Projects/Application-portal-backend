@@ -18,8 +18,9 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     private final GoogleAuthService googleAuthService;
 
-    @Value("${app.oauth2.redirect-url:http://localhost:3000/auth/callback}")
-    private String redirectUrl;
+
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
 
     public OAuth2AuthenticationSuccessHandler(GoogleAuthService googleAuthService) {
         this.googleAuthService = googleAuthService;
@@ -38,21 +39,23 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         String name = oauthUser.getAttribute("name");
         String googleId = oauthUser.getAttribute("sub");
 
+
+        String baseUrl = frontendBaseUrl.endsWith("/") ? frontendBaseUrl.substring(0, frontendBaseUrl.length() - 1) : frontendBaseUrl;
+        String targetUrl = baseUrl + "/auth/callback";
+        String errorUrl = baseUrl + "/auth/error";
+
         if (email == null || googleId == null) {
-            String errorUrl = redirectUrl.replace("/callback", "/error");
             response.sendRedirect(errorUrl + "?message=Missing+required+user+info");
             return;
         }
 
         try {
-
             String token = googleAuthService.handleGoogleLogin(email, googleId, name);
 
-            response.sendRedirect(redirectUrl + "?token=" + token);
+            response.sendRedirect(targetUrl + "?token=" + token);
 
         } catch (Exception e) {
             String errorMsg = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
-            String errorUrl = redirectUrl.replace("/callback", "/error");
             response.sendRedirect(errorUrl + "?message=" + errorMsg);
         }
     }

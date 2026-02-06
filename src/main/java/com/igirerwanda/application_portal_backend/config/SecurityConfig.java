@@ -1,6 +1,7 @@
 package com.igirerwanda.application_portal_backend.config;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value; // Import Value
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -30,6 +31,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final Environment environment;
 
+    // FIX: Inject the allowed origins from application.properties
+    @Value("#{'${cors.allowed-origins}'.split(',')}")
     private List<String> allowedOrigins;
 
     public SecurityConfig(OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
@@ -41,7 +44,6 @@ public class SecurityConfig {
         this.environment = environment;
     }
 
-    // FIXED: Made static to break circular dependency
     @Bean
     public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -51,22 +53,18 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        boolean isDevOrStaging = Arrays.stream(environment.getActiveProfiles())
-                .anyMatch(p -> p.equalsIgnoreCase("dev") || p.equalsIgnoreCase("staging"));
 
         if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
             configuration.setAllowedOrigins(allowedOrigins);
-            configuration.setAllowCredentials(true);
-        } else if (isDevOrStaging) {
-            configuration.setAllowedOriginPatterns(
-                    List.of("http://localhost:3000")
-            );
-            configuration.setAllowCredentials(true);
+        } else {
+
+            configuration.addAllowedOriginPattern("*");
         }
 
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization")); // Allow frontend to read auth headers
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -92,15 +90,11 @@ public class SecurityConfig {
                                 "/api/v1/auth/**",
                                 "/api/v1/auth/google/**",
                                 "/login/oauth2/code/**",
-                                "/ws/**" // Ensure WebSocket endpoint is allowed publicly for handshake
+                                "/ws/**",
+                                "/api/v1/cohorts/frontend"
                         ).permitAll()
-
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/api/v1/cohorts/**").permitAll()
-
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
