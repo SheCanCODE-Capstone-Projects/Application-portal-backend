@@ -33,6 +33,10 @@ services:
         value: "0"
       - key: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
         value: "60000"
+      - key: SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT
+        value: "30000"
+      - key: SPRING_DATASOURCE_HIKARI_MAX_LIFETIME
+        value: "600000"
 
       # --- Master Database Config ---
       - key: MASTER_DATASOURCE_URL
@@ -49,6 +53,21 @@ services:
         value: "0"
       - key: MASTER_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
         value: "60000"
+      - key: MASTER_DATASOURCE_HIKARI_IDLE_TIMEOUT
+        value: "30000"
+      - key: MASTER_DATASOURCE_HIKARI_MAX_LIFETIME
+        value: "600000"
+
+      # --- JPA/Hibernate Configuration ---
+      # FIX: Remove explicit dialect warning
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: validate
+      - key: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
+        value: ""
+      - key: SPRING_JPA_SHOW_SQL
+        value: "false"
+      - key: SPRING_JPA_OPEN_IN_VIEW
+        value: "false"
 
       # --- Secrets (Manual Entry in Dashboard) ---
       - key: JWT_SECRET
@@ -72,8 +91,8 @@ services:
       - key: FRONTEND_BASE_URL
         value: https://application-portal-frontend-chi.vercel.app
 
-      # --- Optimization & Safety ---
-      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
-        value: validate
+      # --- Performance Optimization ---
       - key: SPRING_MAIN_LAZY_INITIALIZATION
         value: "false"
+      - key: LOGGING_LEVEL_ORG_HIBERNATE_ORM_DEPRECATION
+        value: "ERROR"
