@@ -47,12 +47,16 @@ public class Notification {
     private String applicationStatus;
 
     public enum NotificationType {
-        APPLICATION_STARTED,       // NEW
+        APPLICATION_STARTED,
         APPLICATION_SUBMITTED,
         APPLICATION_UNDER_REVIEW,
         APPLICATION_ACCEPTED,
         APPLICATION_REJECTED,
         INTERVIEW_SCHEDULED,
-        GENERAL
+        GENERAL,
+        REMINDER_INCOMPLETE,
+        REMINDER_PROGRAM_START,
+        REMINDER_UNDER_REVIEW,
+        ADMIN_DAILY_SUMMARY
     }
 }
