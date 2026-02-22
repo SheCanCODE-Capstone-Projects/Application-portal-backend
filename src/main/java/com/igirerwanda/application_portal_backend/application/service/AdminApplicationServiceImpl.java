@@ -189,6 +189,8 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
         dto.setSubmittedAt(app.getSubmittedAt());
         dto.setCreatedAt(app.getCreatedAt());
 
+        dto.setInterviewDate(app.getInterviewDate());
+
         // --- FULL DATA MAPPING ---
         PersonalInformation pi = app.getPersonalInformation();
         if (pi != null) {

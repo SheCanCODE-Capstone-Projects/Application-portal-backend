@@ -75,7 +75,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void sendInterviewScheduledNotification(Application app, String details) {
         String title = "Interview Scheduled 📅";
-        String message = "You have an interview scheduled. Check email for details.";
+        String message = "You have an interview scheduled:\n" + details;
         String emailBody = String.format("Dear %s,\nInterview Details:\n%s", getApplicantName(app), details);
         notifyUserMultiChannel(app.getUser(), title, message, "Interview Invitation", emailBody, NotificationType.INTERVIEW_SCHEDULED, app.getId(), "INTERVIEW_SCHEDULED");
     }

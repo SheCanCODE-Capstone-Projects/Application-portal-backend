@@ -371,6 +371,8 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         dto.setSubmittedAt(app.getSubmittedAt());
         dto.setCreatedAt(app.getCreatedAt());
 
+        dto.setInterviewDate(app.getInterviewDate());
+
         PersonalInformation pi = app.getPersonalInformation();
         if (pi != null) {
             PersonalInfoDto piDto = new PersonalInfoDto();

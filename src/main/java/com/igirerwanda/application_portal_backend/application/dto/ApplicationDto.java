@@ -20,6 +20,10 @@ public class ApplicationDto {
     private String systemRejectionReason;
     private LocalDateTime submittedAt;
     private LocalDateTime createdAt;
+
+    // 👇 ADD THIS LINE so the frontend gets the interview date for the calendar
+    private LocalDateTime interviewDate;
+
     private PersonalInfoDto personalInfo;
     private EducationDto education;
     private MotivationDto motivation;
