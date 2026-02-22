@@ -90,6 +90,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/**",
                                 "/api/v1/auth/google/**",
                                 "/login/oauth2/code/**",
+                                "/oauth2/authorization/**",
                                 "/ws/**",
                                 "/api/v1/cohorts/frontend",
                                 "/actuator/**"
