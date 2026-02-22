@@ -4,6 +4,8 @@ import com.igirerwanda.application_portal_backend.common.util.ApiResponse;
 import com.igirerwanda.application_portal_backend.common.util.JwtUtil;
 import com.igirerwanda.application_portal_backend.notification.dto.NotificationDto;
 import com.igirerwanda.application_portal_backend.notification.service.NotificationService;
+import com.igirerwanda.application_portal_backend.user.entity.User;
+import com.igirerwanda.application_portal_backend.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +24,13 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
 
-    private UUID getUserId() {
-        return UUID.fromString(jwtUtil.getCurrentUserId());
+    private UUID getActualUserId() {
+        UUID registerId = UUID.fromString(jwtUtil.getCurrentUserId());
+        User user = userService.findByRegisterId(registerId);
+        return user.getId();
     }
 
     @GetMapping
@@ -33,7 +38,7 @@ public class NotificationController {
     public ResponseEntity<ApiResponse<List<NotificationDto>>> getMyNotifications() {
         return ResponseEntity.ok(ApiResponse.success(
                 "Notifications retrieved",
-                notificationService.getUserNotifications(getUserId())
+                notificationService.getUserNotifications(getActualUserId())
         ));
     }
 
@@ -42,30 +47,30 @@ public class NotificationController {
     public ResponseEntity<ApiResponse<List<NotificationDto>>> getUnreadNotifications() {
         return ResponseEntity.ok(ApiResponse.success(
                 "Unread notifications retrieved",
-                notificationService.getUnreadNotifications(getUserId())
+                notificationService.getUnreadNotifications(getActualUserId())
         ));
     }
 
     @GetMapping("/unread/count")
-    @Operation(summary = "Count Unread", description = "Returns the number of unread notifications (useful for badges).")
+    @Operation(summary = "Count Unread", description = "Returns the number of unread notifications.")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getUnreadCount() {
         return ResponseEntity.ok(ApiResponse.success(
                 "Count retrieved",
-                Map.of("count", notificationService.getUnreadCount(getUserId()))
+                Map.of("count", notificationService.getUnreadCount(getActualUserId()))
         ));
     }
 
     @PutMapping("/{id}/read")
     @Operation(summary = "Mark One as Read", description = "Marks a specific notification as read.")
     public ResponseEntity<ApiResponse<Void>> markAsRead(@PathVariable UUID id) {
-        notificationService.markAsRead(id, getUserId());
+        notificationService.markAsRead(id, getActualUserId());
         return ResponseEntity.ok(ApiResponse.success("Notification marked as read"));
     }
 
     @PutMapping("/read-all")
     @Operation(summary = "Mark All as Read", description = "Marks all the user's notifications as read.")
     public ResponseEntity<ApiResponse<Void>> markAllAsRead() {
-        notificationService.markAllAsRead(getUserId());
+        notificationService.markAllAsRead(getActualUserId());
         return ResponseEntity.ok(ApiResponse.success("All notifications marked as read"));
     }
 }
