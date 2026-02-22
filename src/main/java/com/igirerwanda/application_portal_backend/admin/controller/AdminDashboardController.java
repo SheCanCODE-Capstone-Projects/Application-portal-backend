@@ -5,6 +5,7 @@ import com.igirerwanda.application_portal_backend.application.repository.Applica
 import com.igirerwanda.application_portal_backend.cohort.repository.CohortRepository;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.user.repository.UserRepository;
+import com.igirerwanda.application_portal_backend.me.service.MasterDataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,9 +27,10 @@ public class AdminDashboardController {
     private final ApplicationRepository applicationRepo;
     private final CohortRepository cohortRepo;
     private final UserRepository userRepo;
-
-    // This injection resolves the "Cannot resolve symbol 'adminService'" error
     private final AdminService adminService;
+
+    // --- NEW: Inject MasterDataService ---
+    private final MasterDataService masterDataService;
 
     @GetMapping("/stats")
     public ResponseEntity<?> getStats() {
@@ -37,12 +39,14 @@ public class AdminDashboardController {
         long activeCohorts = cohortRepo.count();
         long systemRejects = applicationRepo.countByIsSystemRejectedTrue();
         long successfulRegisters = userRepo.count();
-        long duplicateApplications = applicationRepo.countDuplicateRejections(); // Synchronization Check
+        long duplicateApplications = applicationRepo.countDuplicateRejections();
+
+        // --- NEW: Get the total synchronized candidates directly from the Master DB ---
+        long synchronizedUsers = masterDataService.countSynchronizedUsers();
 
         // 2. Graph Data: Applications by Day
         List<Object[]> dailyDataRaw = applicationRepo.countApplicationsByDay();
 
-        // Fixed: Replaced .collect(Collectors.toList()) with .toList()
         List<Map<String, Object>> dailyTrend = dailyDataRaw.stream().map(record -> Map.of(
                 "date", record[0].toString(),
                 "count", record[1]
@@ -75,12 +79,14 @@ public class AdminDashboardController {
         String rejectsTrend = (totalApplicants == 0)
                 ? "0% Rate"
                 : Math.round((double) systemRejects / totalApplicants * 100) + "% Rate";
+
         return ResponseEntity.ok(Map.of("data", Map.of(
                 "totalApplicants", totalApplicants,
                 "activeCohorts", activeCohorts,
                 "systemRejects", systemRejects,
                 "successfulRegisters", successfulRegisters,
                 "duplicateRejections", duplicateApplications,
+                "synchronizedUsers", synchronizedUsers, // <-- NEW: Added to response payload
                 "charts", Map.of(
                         "dailyTrend", dailyTrend,
                         "cohortBreakdown", cohortBreakdown
@@ -94,7 +100,6 @@ public class AdminDashboardController {
         )));
     }
 
-    // NEW ENDPOINT: Serves the 90-day history for the API Status frontend page
     @GetMapping("/system/health")
     public ResponseEntity<?> getSystemHealth() {
         Map<String, Object> healthData = adminService.getSystemHealthData();

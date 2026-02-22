@@ -105,6 +105,10 @@ public class UserServiceImpl implements UserService {
         if (user.getRegister() != null) {
             dto.setEmail(user.getRegister().getEmail());
             dto.setUsername(user.getRegister().getUsername());
+
+            // --- NEW: Map Provider and Role ---
+            dto.setProvider(user.getRegister().getProvider());
+            dto.setRole(user.getRegister().getRole());
         }
 
         if (user.getCohort() != null) {

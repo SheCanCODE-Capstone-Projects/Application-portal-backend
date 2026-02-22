@@ -8,7 +8,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "master_beneficiaries", indexes = {
         @Index(name = "idx_master_phone", columnList = "phoneNumber"),
-        @Index(name = "idx_master_nid", columnList = "origin_id") // FIXED: Use actual DB column name
+        @Index(name = "idx_master_nid", columnList = "origin_id")
 })
 @Data
 public class MasterUser {
@@ -33,6 +33,13 @@ public class MasterUser {
 
     @Column(name = "application_date")
     private LocalDateTime applicationDate;
+
+    // --- NEW FIELDS ---
+    @Column(name = "role")
+    private String role;
+
+    @Column(name = "provider")
+    private String provider;
 
     private LocalDateTime syncedAt;
 
