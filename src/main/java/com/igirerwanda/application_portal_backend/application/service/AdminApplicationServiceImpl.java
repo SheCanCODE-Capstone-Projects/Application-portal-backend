@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.format.DateTimeFormatter;
 
 import java.util.List;
 import java.util.UUID;
@@ -119,10 +120,29 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
         app.setInterviewDate(request.getInterviewDate());
         Application saved = applicationRepository.save(app);
 
-        String instructions = request.getInstructions() != null ? request.getInstructions() : "No instructions provided";
-        String details = String.format("Date: %s. Instructions: %s", request.getInterviewDate().toString(), instructions);
+        // 1. Format the date into a human-readable format (e.g., "Mar 15, 2026 at 10:30 AM")
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' hh:mm a");
+        String formattedDate = request.getInterviewDate().format(formatter);
 
-        notificationService.sendInterviewScheduledNotification(saved, details);
+        // 2. Build the notification message details
+        StringBuilder detailsBuilder = new StringBuilder();
+        detailsBuilder.append("Your application has progressed to the interview stage.\n");
+        detailsBuilder.append("Interview Date: ").append(formattedDate);
+
+        // Add instructions if they exist
+        if (request.getInstructions() != null && !request.getInstructions().trim().isEmpty()) {
+            detailsBuilder.append("\nInstructions: ").append(request.getInstructions());
+        }
+
+        // Add meeting link if your InterviewScheduleRequest DTO has getMeetingLink()
+        // (If you haven't added meetingLink to the DTO yet, you can also just pass the link inside the instructions field!)
+        if (request.getMeetingLink() != null && !request.getMeetingLink().trim().isEmpty()) {
+            detailsBuilder.append("\nMeeting Link: ").append(request.getMeetingLink());
+        }
+
+        // 3. Send Notification
+        notificationService.sendInterviewScheduledNotification(saved, detailsBuilder.toString());
+
         return mapToDto(saved);
     }
 

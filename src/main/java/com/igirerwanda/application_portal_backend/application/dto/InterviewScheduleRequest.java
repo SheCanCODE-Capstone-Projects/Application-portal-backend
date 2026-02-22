@@ -12,4 +12,7 @@ public class InterviewScheduleRequest {
     private LocalDateTime interviewDate;
 
     private String instructions;
+
+    // Add this missing field so the service can access getMeetingLink()
+    private String meetingLink;
 }
