@@ -2,9 +2,11 @@ package com.igirerwanda.application_portal_backend.application.controller;
 
 import com.igirerwanda.application_portal_backend.application.dto.ApplicationDto;
 import com.igirerwanda.application_portal_backend.application.dto.InterviewScheduleRequest;
+import com.igirerwanda.application_portal_backend.application.entity.Application;
 import com.igirerwanda.application_portal_backend.application.service.AdminApplicationService;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
 import com.igirerwanda.application_portal_backend.common.util.ApiResponse;
+import com.igirerwanda.application_portal_backend.storange.dto.StorageSummaryDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -14,7 +16,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID; // Import UUID
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/admin/applications")
@@ -135,6 +139,16 @@ public class AdminApplicationController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Application moved to review",
                 adminService.markAsUnderReview(id)
+        ));
+    }
+
+    @GetMapping("/storage")
+    @Operation(summary = "Get Storage Tree", description = "Get all historical applications grouped by year and cohort (including deleted)")
+    public ResponseEntity<ApiResponse<StorageSummaryDto>> getStorageTree() {
+        // We removed applicationRepository here and moved it to the Service!
+        return ResponseEntity.ok(ApiResponse.success(
+                "Storage tree retrieved",
+                adminService.getStorageTree()
         ));
     }
 }

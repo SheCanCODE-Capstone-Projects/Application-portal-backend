@@ -1,20 +1,21 @@
 package com.igirerwanda.application_portal_backend.admin.controller;
 
+import com.igirerwanda.application_portal_backend.admin.service.AdminService;
 import com.igirerwanda.application_portal_backend.application.repository.ApplicationRepository;
 import com.igirerwanda.application_portal_backend.cohort.repository.CohortRepository;
-import com.igirerwanda.application_portal_backend.user.repository.UserRepository;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
+import com.igirerwanda.application_portal_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/admin/dashboard")
@@ -25,6 +26,9 @@ public class AdminDashboardController {
     private final ApplicationRepository applicationRepo;
     private final CohortRepository cohortRepo;
     private final UserRepository userRepo;
+
+    // This injection resolves the "Cannot resolve symbol 'adminService'" error
+    private final AdminService adminService;
 
     @GetMapping("/stats")
     public ResponseEntity<?> getStats() {
@@ -37,10 +41,12 @@ public class AdminDashboardController {
 
         // 2. Graph Data: Applications by Day
         List<Object[]> dailyDataRaw = applicationRepo.countApplicationsByDay();
+
+        // Fixed: Replaced .collect(Collectors.toList()) with .toList()
         List<Map<String, Object>> dailyTrend = dailyDataRaw.stream().map(record -> Map.of(
                 "date", record[0].toString(),
                 "count", record[1]
-        )).collect(Collectors.toList());
+        )).toList();
 
         // 3. Graph Data: Status by Cohort
         List<Object[]> cohortDataRaw = applicationRepo.countApplicationsByCohortAndStatus();
@@ -67,8 +73,8 @@ public class AdminDashboardController {
         });
 
         String rejectsTrend = (totalApplicants == 0)
-                               ? "0% Rate"
-                              : Math.round((double) systemRejects / totalApplicants * 100) + "% Rate";
+                ? "0% Rate"
+                : Math.round((double) systemRejects / totalApplicants * 100) + "% Rate";
         return ResponseEntity.ok(Map.of("data", Map.of(
                 "totalApplicants", totalApplicants,
                 "activeCohorts", activeCohorts,
@@ -86,5 +92,15 @@ public class AdminDashboardController {
                         "registers", "Total Users"
                 )
         )));
+    }
+
+    // NEW ENDPOINT: Serves the 90-day history for the API Status frontend page
+    @GetMapping("/system/health")
+    public ResponseEntity<?> getSystemHealth() {
+        Map<String, Object> healthData = adminService.getSystemHealthData();
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "data", healthData
+        ));
     }
 }

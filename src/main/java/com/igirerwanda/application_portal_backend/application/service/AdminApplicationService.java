@@ -3,6 +3,8 @@ package com.igirerwanda.application_portal_backend.application.service;
 import com.igirerwanda.application_portal_backend.application.dto.ApplicationDto;
 import com.igirerwanda.application_portal_backend.application.dto.InterviewScheduleRequest;
 import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus;
+import com.igirerwanda.application_portal_backend.storange.dto.StorageSummaryDto;
+
 import java.util.List;
 import java.util.UUID; // Import UUID
 
@@ -24,5 +26,8 @@ public interface AdminApplicationService {
     void softDeleteApplication(UUID applicationId);
     void archiveApplication(UUID applicationId);
     void restoreApplication(UUID applicationId);
+
+    // ... inside the interface ...
+    StorageSummaryDto getStorageTree();
 
 }

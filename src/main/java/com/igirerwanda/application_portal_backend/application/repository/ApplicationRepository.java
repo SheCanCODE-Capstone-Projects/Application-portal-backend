@@ -18,7 +18,6 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     Optional<Application> findByUserId(UUID userId);
     Optional<Application> findByUserIdAndCohortId(UUID userId, UUID cohortId);
 
-    // Existing methods...
     List<Application> findByStatusAndDeletedFalse(ApplicationStatus status);
     List<Application> findByIsSystemRejectedTrueAndDeletedFalse();
     List<Application> findByArchivedTrueAndDeletedFalse();
@@ -29,6 +28,9 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     Optional<Application> findByIdActive(UUID id);
 
     long countByIsSystemRejectedTrue();
+
+    // --- FIX: ADDED THIS LINE TO RESOLVE THE ERROR ---
+    long countByStatus(ApplicationStatus status);
 
     // --- QUERIES FOR NOTIFICATIONS & ANALYTICS ---
 
@@ -47,7 +49,7 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     @Query("SELECT COUNT(a) FROM Application a WHERE a.status = 'ACCEPTED' OR a.status = 'APPROVED'")
     long countSynchronizedCandidates();
 
-    // 5. Native queries for graphs (Already existed, keeping them)
+    // 5. Native queries for graphs
     @Query(value = "SELECT DATE(created_at) as date, COUNT(*) as count FROM applications GROUP BY DATE(created_at) ORDER BY date ASC", nativeQuery = true)
     List<Object[]> countApplicationsByDay();
 

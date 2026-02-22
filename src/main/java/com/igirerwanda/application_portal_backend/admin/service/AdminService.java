@@ -5,6 +5,7 @@ import com.igirerwanda.application_portal_backend.admin.dto.AdminResponseDto;
 import com.igirerwanda.application_portal_backend.admin.entity.AdminActivity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface AdminService {
@@ -16,4 +17,7 @@ public interface AdminService {
     AdminResponseDto getAdminById(UUID adminId);
     AdminResponseDto updateAdmin(UUID adminId, AdminCreateDto adminUpdateDto);
     void deleteAdmin(UUID adminId);
+
+    // System Health Status for Dashboard
+    Map<String, Object> getSystemHealthData();
 }

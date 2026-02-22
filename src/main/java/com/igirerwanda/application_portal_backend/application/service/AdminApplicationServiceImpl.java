@@ -9,6 +9,7 @@ import com.igirerwanda.application_portal_backend.common.enums.ApplicationStatus
 import com.igirerwanda.application_portal_backend.common.exception.NotFoundException;
 import com.igirerwanda.application_portal_backend.me.service.MasterDataService;
 import com.igirerwanda.application_portal_backend.notification.service.NotificationService;
+import com.igirerwanda.application_portal_backend.storange.dto.StorageSummaryDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -171,6 +172,29 @@ public class AdminApplicationServiceImpl implements AdminApplicationService {
     private Application findById(UUID id) {
         return applicationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Application not found with id: " + id));
+    }
+
+    @Override
+    public StorageSummaryDto getStorageTree() {
+        // 1. Fetch all entities
+        List<Application> applications = applicationRepository.findAll();
+
+        // 2. Map to DTOs
+        List<ApplicationDto> allApps = applications.stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+
+        // 3. Group securely with explicit typing to prevent compiler confusion
+        java.util.Map<Integer, java.util.Map<String, List<ApplicationDto>>> tree = allApps.stream()
+                .collect(Collectors.groupingBy(
+                        (ApplicationDto app) -> app.getCreatedAt().getYear(),
+                        Collectors.groupingBy((ApplicationDto app) -> app.getCohortName() != null ? app.getCohortName() : "Unassigned")
+                ));
+
+        // 4. Wrap in DTO
+        StorageSummaryDto summary = new StorageSummaryDto();
+        summary.setStorageTree(tree);
+        return summary;
     }
 
     private ApplicationDto mapToDto(Application app) {
