@@ -31,7 +31,6 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final Environment environment;
 
-    // FIX: Inject the allowed origins from application.properties
     @Value("#{'${cors.allowed-origins}'.split(',')}")
     private List<String> allowedOrigins;
 
@@ -53,18 +52,20 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-
+        // Use setAllowedOriginPatterns instead of setAllowedOrigins.
+        // This is required when allowCredentials=true and works for both
+        // exact origins and wildcards.
         if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
-            configuration.setAllowedOrigins(allowedOrigins);
+            configuration.setAllowedOriginPatterns(allowedOrigins);
         } else {
-
             configuration.addAllowedOriginPattern("*");
         }
 
         configuration.setAllowCredentials(true);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
