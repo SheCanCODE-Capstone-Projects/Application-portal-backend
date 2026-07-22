@@ -54,7 +54,6 @@ public class MasterDataService {
         master.setCohortJoined(app.getCohort().getName());
         master.setApplicationDate(app.getSubmittedAt());
 
-        // --- NEW: Add Role and Provider ---
         if (app.getUser() != null && app.getUser().getRegister() != null) {
             master.setRole(app.getUser().getRegister().getRole().name());
             master.setProvider(app.getUser().getRegister().getProvider().name());
@@ -64,13 +63,11 @@ public class MasterDataService {
         log.info("Successfully synced {} to Master Data.", pi.getFullName());
     }
 
-    // --- NEW: Method to count synchronized users ---
     @Transactional(readOnly = true, transactionManager = "masterTransactionManager")
     public long countSynchronizedUsers() {
         return masterUserRepository.count();
     }
 
-    // --- NEW: Fetch Synchronized Users Step-by-Step (Paginated) ---
     @Transactional(readOnly = true, transactionManager = "masterTransactionManager")
     public Page<MasterUser> getSynchronizedUsers(Pageable pageable) {
         return masterUserRepository.findAll(pageable);
