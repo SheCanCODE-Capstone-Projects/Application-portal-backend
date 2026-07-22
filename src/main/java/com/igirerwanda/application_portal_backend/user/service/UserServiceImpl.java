@@ -100,19 +100,18 @@ public class UserServiceImpl implements UserService {
 
     private UserResponseDto mapToDto(User user) {
         UserResponseDto dto = new UserResponseDto();
-        dto.setId(user.getId()); // UUID
+        dto.setId(user.getId());
 
         if (user.getRegister() != null) {
             dto.setEmail(user.getRegister().getEmail());
             dto.setUsername(user.getRegister().getUsername());
 
-            // --- NEW: Map Provider and Role ---
             dto.setProvider(user.getRegister().getProvider());
             dto.setRole(user.getRegister().getRole());
         }
 
         if (user.getCohort() != null) {
-            dto.setCohortId(user.getCohort().getId()); // UUID
+            dto.setCohortId(user.getCohort().getId());
             dto.setCohortName(user.getCohort().getName());
         }
 
