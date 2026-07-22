@@ -27,7 +27,6 @@ public class AdminUserController {
     private final UserService userService;
     private final MasterDataService masterDataService;
 
-    // Admin viewing all portal users (now includes provider/role automatically)
     @GetMapping
     public ResponseEntity<List<UserResponseDto>> getAll() {
         return ResponseEntity.ok(userService.getAllUsersDetailed());
@@ -39,18 +38,15 @@ public class AdminUserController {
         return ResponseEntity.ok(Map.of("message", "User soft-deleted"));
     }
 
-    // --- NEW: View Synchronized Users Step-by-Step (Paginated List) ---
-    // Example usage: GET /api/v1/admin/users/synchronized?page=0&size=10
     @GetMapping("/synchronized")
     public ResponseEntity<Page<MESyncDto>> getSynchronizedUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        // Fetch records ordered by the time they were synced
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "syncedAt"));
         Page<MasterUser> masterUsers = masterDataService.getSynchronizedUsers(pageable);
 
-        // Map Entities to DTOs for the frontend
         Page<MESyncDto> responsePage = masterUsers.map(this::mapToSyncDto);
         return ResponseEntity.ok(responsePage);
     }
