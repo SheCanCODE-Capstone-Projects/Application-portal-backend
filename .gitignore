@@ -18,6 +18,7 @@ target/
 *.iws
 *.iml
 *.ipr
+temp_auto_push.bat
 
 ### NetBeans ###
 /nbproject/private/
@@ -32,13 +33,10 @@ build/
 ### VS Code ###
 
 ### Environment & Logs ###
-.env
-.env.local
 .env.prod
 logs/
 *.log
-.env
-branch_structure.json
-temp_auto_push.bat
-temp_interactive_push.bat
 .gitignore
+branch_structure.json
+config.bat
+node_modules
