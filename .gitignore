@@ -38,7 +38,4 @@ logs/
 .gitignore
 branch_structure.json
 node_modules
-.vscode/
-.env
-.env.local
-.env
+config.bat
