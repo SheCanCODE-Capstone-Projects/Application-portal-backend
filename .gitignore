@@ -18,7 +18,6 @@ target/
 *.iws
 *.iml
 *.ipr
-temp_auto_push.bat
 
 ### NetBeans ###
 /nbproject/private/
@@ -41,3 +40,4 @@ logs/
 .env
 .gitignore
 branch_structure.json
+.vscode/
